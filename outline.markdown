@@ -13,11 +13,11 @@
 # Static metaprogramming in OCaml and Haskell
 
  * Camlp4:
-  preprocessing front-end to ocamlc,
+  preprocessing front-end to the OCaml compiler,
   AST transformations written as Camlp4 plugins
 
  * Template Haskell:
-  compiler extension to ghc,
+  compiler extensions to ghc,
   AST transformations embedded in Haskell code
 
 # A small example: first-order map
@@ -40,7 +40,7 @@ static expansion
 
 # tuple map in OCaml
 
-# tuple map in Haskell [is this covered by deriving Functor?]
+# tuple map in Haskell
 
 # ASTs in Camlp4
 
@@ -58,12 +58,13 @@ static expansion
 
 # Camlp4-specific features, example
 
- * quotations
- * extending OCaml
+ * defining new quotations / antiquotations
+ * extending OCaml syntax
 
 # Template Haskell specific features, example
 
  * reification
- * [what else?]
+ * safer name handling with Q module
+ * type-checked quotations
 
 # Practice: [something using the specific features]
