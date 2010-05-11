@@ -1,0 +1,13 @@
+* revisit Jq_print
+* keywords with trailing garbage are still parsed
+* handle ints in number parsing
+* handle exponents in number parsing
+* be consistent with revised vs. original syntax
+* get locations right
+* have to do #camlp4o before #require "json_quot" at toplevel, why?
+* return cleaned-up AST without locations / extra constructors
+   maybe Json_type from json-wheel?
+* can we avoid strings in e.g. Jq_number, and always use Jq_Ant?
+* simplify Jq_print.JSString?
+* func to validate a Jq_ast.t? can blow up Jq_print with invalid
+* be careful with trailing list comma in Jq_print

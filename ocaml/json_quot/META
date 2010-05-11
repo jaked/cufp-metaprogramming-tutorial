@@ -1,0 +1,7 @@
+name = "json_quot"
+version = "0.1"
+description = "JSON quotations"
+requires = "camlp4.lib,ulex"
+archive(byte) = "json_quot.cma"
+archive(native) = "json_quot.cmxa"
+archive(byte,toploop) = "json_quot.cma jq_top.cmo"
