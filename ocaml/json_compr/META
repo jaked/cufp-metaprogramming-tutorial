@@ -1,0 +1,5 @@
+name = "json_compr"
+version = "0.1"
+description = "JSON comprehensions"
+archive(syntax,preprocessor) = "JsonComprehension.cmo"
+archive(syntax,toploop) = "JsonComprehension.cmo"

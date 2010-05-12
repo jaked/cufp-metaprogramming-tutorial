@@ -1,0 +1,4 @@
+* additional Javascript operators
+* trailing garbage is ignored
+* collapse matching constructors / destructors
+* treat exceptions as guards
