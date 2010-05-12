@@ -1,11 +1,5 @@
 open Camlp4.PreCast
 
-(*
-  XXX
-  put these in a library
-  make sure they match Javascript spec
-*)
-
 let is_true _loc j =
   <:expr<
     match $j$ with
@@ -36,30 +30,6 @@ let is_not_equal _loc j1 j2 = <:expr< not $is_equal _loc j1 j2$ >>
 let rec list _loc = function
   | [] -> <:expr< [] >>
   | h :: t -> <:expr< $h$ :: $list _loc t$ >>
-
-(*
-let map _loc p e l =
-  <:expr< Json_type.Array (List.map (fun $p$ -> $e$) (Json_type.Browse.array $l$)) >>
-
-let filter _loc p b l =
-  <:expr< Json_type.Array (List.filter (fun $p$ -> $is_true _loc b$) (Json_type.Browse.array $l$)) >>
-
-let concat _loc l =
-  <:expr< Json_type.Array (List.concat (List.map Json_type.Browse.array (Json_type.Browse.array $l$))) >>
-
-let bind _loc p e l =
-  <:expr< let $p$ = $e$ in $l$ >>
-*)
-(* following Camlp4ListComprehension *)
-(*
-let rec expand_compr _loc e = function
-  | [ `gen (p, l) ] -> map _loc p e l
-  | `gen (p, l) :: `cond b :: items ->
-      expand_compr _loc e (`gen (p, filter _loc p b l) :: items)
-  | `gen (p, l) :: ((`gen  _ :: _) as items) ->
-      concat _loc (map _loc p (expand_compr _loc e items) l)
-  | _ -> raise Stream.Failure
-*)
 
 let expand_compr _loc e l =
   let rec ec = function

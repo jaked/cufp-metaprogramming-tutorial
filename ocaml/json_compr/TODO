@@ -2,3 +2,5 @@
 * trailing garbage is ignored
 * collapse matching constructors / destructors
 * treat exceptions as guards
+* put Javascript stuff in library?
+* make sure Javascript ops match spec
