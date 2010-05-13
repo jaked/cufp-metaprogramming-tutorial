@@ -1,0 +1,23 @@
+This example implements a JSON comprehension DSL that works over
+json-wheel Json_type.t values. You can write e.g.
+
+guys_to_hire =
+  <:json_compr<
+    { "name": p.name, "free_projects_names": fpns } |
+    p <- $data$.teams.people,
+    !p.haveJob,
+    let fpns = < pr.name | pr <- p.projects, let li = pr.license, $bool: elem li freeLicense$ >
+  >>
+
+Inside <:json_compr< >> everything is a JSON value; you can
+additionally use object and record projection, and ===, !==, and !
+operators with the same meanings as Javascript. Comprehension guards
+are evaluated according to Javascript rules (e.g. 0 is false, "false"
+is true).
+
+Anywhere you can write an (extended) JSON value you can write an
+antiquotation to embed a Json_type.t (with tags "int", "float",
+"bool", "string", "array", "object" to add the corresponding
+Json_type.t constructor)
+
+The < > syntax means a nested comprehension.
