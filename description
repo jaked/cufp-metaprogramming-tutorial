@@ -1,0 +1,36 @@
+"Static metaprogramming" is compile-time code analysis and
+synthesis. It has many applications, such as (from simple to complex):
+defining abbreviations, generating boilerplate from type definitions,
+extending the language syntax, and embedding DSLs.
+
+Static metaprogramming is supported for Haskell with Template Haskell,
+and for OCaml with Camlp4; the two systems have a lot in common. In
+this tutorial we will work through examples in both languages,
+sticking mostly to their commonalities. We will also say a little
+about features which are unique to each.
+
+The main features we will cover are:
+
+ * host language syntax trees
+ * quotations / antiquotations for host language syntax trees
+ * defining new quotations
+ * pragmatics of each tool
+
+(Quotations / antiquotations are a mechanism for working with host
+language abstract syntax trees using the concrete syntax of the host
+language.)
+
+We will motivate these features through examples of increasing
+complexity, including a simple DSL for working with JSON data.
+
+Participants should be familiar with either OCaml or Haskell, but we
+will assume no prior knowledge of Template Haskell or Camlp4. It would
+be helpful to know the basics of parsing (lexing vs. parsing, abstract
+syntax trees, recursive descent) and be familiar with at least one
+parser generator.
+
+Participants will leave with a basic understanding of how to build
+syntax extensions with the two systems, including how to run the tool,
+how to work with the host language syntax trees using quotations and
+antiquotations, and how to define new quotations to extend the host
+language.
