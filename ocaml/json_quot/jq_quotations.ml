@@ -3,24 +3,6 @@ open Camlp4.PreCast
 module Q = Syntax.Quotation
 module TheAntiquotSyntax = Syntax.AntiquotSyntax
 
-(* I don't totally understand what's going on here but this is how
-   Camlp4QuotationCommon.ml does it. *)
-
-module MetaLocHere = Jq_ast.Meta.MetaLoc
-module MetaLoc =
-struct
-  let loc_name = ref None
-  let meta_loc_expr _loc loc =
-    match !loc_name with
-      | None -> <:expr< $lid:!Loc.name$ >>
-      | Some "here" -> MetaLocHere.meta_loc_expr _loc loc
-      | Some x -> <:expr< $lid:x$ >>
-  let meta_loc_patt _loc _ = <:patt< _ >>;
-end
-module MetaAst = Jq_ast.Meta.Make(MetaLoc)
-module ME = MetaAst.Expr
-module MP = MetaAst.Patt
-
 let is_antiquot s =
   let len = String.length s in
   len > 2 && s.[0] = '\\' && s.[1] = '$'
@@ -68,7 +50,6 @@ let add_quotation name entry mexpr mpatt =
     res in
   let expand_expr loc loc_name_opt s =
     let ast = parse_quot_string entry_eoi loc s in
-    let () = MetaLoc.loc_name := loc_name_opt in
     let meta_ast = mexpr loc ast in
     let exp_ast = antiquot_expander#expr meta_ast in
     exp_ast in
@@ -101,5 +82,5 @@ let add_quotation name entry mexpr mpatt =
 
 ;;
 
-add_quotation "json" Jq_parser.json ME.meta_t MP.meta_t;
+add_quotation "json" Jq_parser.json Jq_ast.MetaExpr.meta_t Jq_ast.MetaPatt.meta_t;
 Q.default := "json";

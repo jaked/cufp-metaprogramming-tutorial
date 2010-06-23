@@ -29,27 +29,27 @@ a_NUM: [[
 
 comma_list: [[
   `ANTIQUOT ("list" as n, s) -> Jq_Ant (_loc, mk_anti n s)
-| e1 = SELF; ","; e2 = SELF -> Jq_comma (_loc, e1, e2)
+| e1 = SELF; ","; e2 = SELF -> Jq_comma (e1, e2)
 | e = json -> e
-| -> Jq_nil _loc
+| -> Jq_nil
 ]];
 
 kv_comma_list: [[
   `ANTIQUOT ("list" as n, s) -> Jq_Ant (_loc, mk_anti n s)
-| e1 = SELF; ","; e2 = SELF -> Jq_comma (_loc, e1, e2)
-| e1 = json; ":"; e2 = json -> Jq_colon (_loc, e1, e2)
-| -> Jq_nil _loc
+| e1 = SELF; ","; e2 = SELF -> Jq_comma (e1, e2)
+| e1 = json; ":"; e2 = json -> Jq_colon (e1, e2)
+| -> Jq_nil
 ]];
 
 json: [[
   `ANTIQUOT (""|"anti" as n, s) -> Jq_Ant (_loc, mk_anti n s)
-| i = a_NUM -> Jq_number (_loc, i)
-| s = a_STRING -> Jq_string (_loc, s)
-| "null" -> Jq_null (_loc)
-| "true" -> Jq_bool (_loc, "true")
-| "false" -> Jq_bool (_loc, "false")
-| "["; es = comma_list; "]" -> Jq_array (_loc, es)
-| "{"; kvs = kv_comma_list; "}" -> Jq_object (_loc, kvs)
+| i = a_NUM -> Jq_number i
+| s = a_STRING -> Jq_string s
+| "null" -> Jq_null
+| "true" -> Jq_bool "true"
+| "false" -> Jq_bool "false"
+| "["; es = comma_list; "]" -> Jq_array es
+| "{"; kvs = kv_comma_list; "}" -> Jq_object kvs
 ]];
 
 END

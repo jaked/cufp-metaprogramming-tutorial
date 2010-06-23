@@ -5,7 +5,7 @@
 * be consistent with revised vs. original syntax
 * get locations right
 * have to do #camlp4o before #require "json_quot" at toplevel, why?
-* return cleaned-up AST without locations / extra constructors
+* return cleaned-up AST without extra constructors
    maybe Json_type from json-wheel?
 * can we avoid strings in e.g. Jq_number, and always use Jq_Ant?
 * simplify Jq_print.JSString?

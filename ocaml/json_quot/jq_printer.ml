@@ -135,26 +135,26 @@ struct
 end
 
 let rec t ppf = function
-  | Jq_null _  -> fprintf ppf "null"
-  | Jq_bool (_, b) -> fprintf ppf "%s" b
-  | Jq_number (_, n) -> fprintf ppf "%s" n
-  | Jq_string (_, s) -> fprintf ppf "\"%s\"" (JSString.escaped s)
+  | Jq_null  -> fprintf ppf "null"
+  | Jq_bool b -> fprintf ppf "%s" b
+  | Jq_number n -> fprintf ppf "%s" n
+  | Jq_string s -> fprintf ppf "\"%s\"" (JSString.escaped s)
 
-  | Jq_colon (_, t1, t2) -> fprintf ppf "@[<h>%a@ :@ %a@]" t t1 t t2
+  | Jq_colon (t1, t2) -> fprintf ppf "@[<h>%a@ :@ %a@]" t t1 t t2
 
-  | Jq_array (_, ts) -> fprintf ppf "@[<hv>[@;<1 2>%a@ ]@]" commas ts
+  | Jq_array ts -> fprintf ppf "@[<hv>[@;<1 2>%a@ ]@]" commas ts
 
-  | Jq_object (_, ts) -> fprintf ppf "@[<hv>{@;<1 2>%a@ }@]" commas ts
+  | Jq_object ts -> fprintf ppf "@[<hv>{@;<1 2>%a@ }@]" commas ts
 
   | Jq_Ant (_, s) -> fprintf ppf "$%s$" s
 
-  | Jq_nil _ -> assert false
+  | Jq_nil -> assert false
   | Jq_comma _ -> assert false
 
 and commas ppf e =
   match e with
-    | Jq_nil _ -> ()
-    | Jq_comma (_, t1, t2) ->
+    | Jq_nil -> ()
+    | Jq_comma (t1, t2) ->
         commas ppf t1;
         fprintf ppf ",@;<1 2>";
         commas ppf t2;
