@@ -1,86 +1,72 @@
 open Camlp4.PreCast
 
 module Q = Syntax.Quotation
-module TheAntiquotSyntax = Syntax.AntiquotSyntax
+module AQ = Syntax.AntiquotSyntax
 
-let is_antiquot s =
-  let len = String.length s in
-  len > 2 && s.[0] = '\\' && s.[1] = '$'
+let destruct_aq s =
+  let pos = String.index s ':' in
+  let name = String.sub s 2 (pos - 2)
+  and code = String.sub s (pos + 1) (String.length s - pos - 1) in
+  name, code
 
-let handle_antiquot_in_string s term parse loc decorate =
-  (* prerr_endline ("handle_antiquot_in_string " ^ s); *)
-  if is_antiquot s then
-    let pos = String.index s ':' in
-    let name = String.sub s 2 (pos - 2)
-    and code = String.sub s (pos + 1) (String.length s - pos - 1) in
-    decorate name (parse loc code)
-  else term
-
-let antiquot_expander =
+let aq_expander =
 object
   inherit Ast.map as super
-  method patt =
-    function
-      | <:patt@_loc< $anti:s$ >>
-      | <:patt@_loc< $str:s$ >> as p ->
-        handle_antiquot_in_string s p TheAntiquotSyntax.parse_patt _loc (fun n p -> p)
-      | p -> super#patt p
   method expr =
     function
-      | <:expr@_loc< $anti:s$ >>
-      | <:expr@_loc< $str:s$ >> as e ->
-        handle_antiquot_in_string s e TheAntiquotSyntax.parse_expr _loc (fun n e ->
-          match n with
-            | "`int" -> <:expr< string_of_int $e$ >>
-            | "`flo" -> <:expr< string_of_float $e$ >>
-            | "list" -> <:expr< Jq_ast.t_of_list $e$ >>
-            (*| "`str" -> <:expr< Ast.safe_string_escaped $e$ >> *)
-            | _ -> e )
+      | <:expr@_loc< $anti:s$ >> ->
+        let n, c = destruct_aq s in
+        let e = AQ.parse_expr _loc c in
+        begin match n with
+          | "bool" -> <:expr< Jq_ast.Jq_bool $e$ >>
+          | "int" -> <:expr< Jq_ast.Jq_number (string_of_int $e$) >>
+          | "flo" -> <:expr< Jq_ast.Jq_number (string_of_float $e$) >>
+          | "str" -> <:expr< Jq_ast.Jq_string $e$ >>
+          | "list" -> <:expr< Jq_ast.t_of_list $e$ >>
+          | _ -> e
+        end
       | e -> super#expr e
+  method patt =
+    function
+      | <:patt@_loc< $anti:s$ >> ->
+        let _, c = destruct_aq s in
+        AQ.parse_patt _loc c
+      | p -> super#patt p
 end
 
-let add_quotation name entry mexpr mpatt =
-  (* let entry_eoi = Jq_parser.Gram.Entry.mk (Jq_parser.Gram.Entry.name entry) in *)
-  let entry_eoi = entry in
-  let parse_quot_string entry loc s =
-    let q = !Camlp4_config.antiquotations in
-    let () = Camlp4_config.antiquotations := true in
-    let res = Jq_parser.Gram.parse_string entry loc s in
-    let () = Camlp4_config.antiquotations := q in
-    res in
-  let expand_expr loc loc_name_opt s =
-    let ast = parse_quot_string entry_eoi loc s in
-    let meta_ast = mexpr loc ast in
-    let exp_ast = antiquot_expander#expr meta_ast in
-    exp_ast in
-  let expand_str_item loc loc_name_opt s =
-    let exp_ast = expand_expr loc loc_name_opt s in
-    <:str_item@loc< $exp:exp_ast$ >> in
-  let expand_patt _loc loc_name_opt s =
-    let ast = parse_quot_string entry_eoi _loc s in
-    let meta_ast = mpatt _loc ast in
-    let exp_ast = antiquot_expander#patt meta_ast in
-    match loc_name_opt with
-      | None -> exp_ast
-      | Some name ->
-        let rec subst_first_loc =
-          function
-            | <:patt@_loc< Ast.$uid:u$ $_$ >> -> <:patt< Ast.$uid:u$ $lid:name$ >>
-            | <:patt@_loc< $a$ $b$ >> -> <:patt< $subst_first_loc a$ $b$ >>
-            | p -> p in
-        subst_first_loc exp_ast in
-  (*
-  EXTEND Jq_parser.Gram
-    entry_eoi:
-    [ [ x = entry; `EOI -> x ] ]
-  ;
-  END;
-  *)
-  Q.add name Q.DynAst.expr_tag expand_expr;
-  Q.add name Q.DynAst.patt_tag expand_patt;
-  Q.add name Q.DynAst.str_item_tag expand_str_item;
+open Jq_lexer (* so Jq_lexer.EOI is in scope, not Camlp4.PreCast.Token.EOI *)
+
+let json_eoi = Jq_parser.Gram.Entry.mk "json_eoi"
+
+EXTEND Jq_parser.Gram
+  json_eoi: [[ x = Jq_parser.json; EOI -> x ]];
+END;;
+
+let parse_quot_string loc s =
+  let q = !Camlp4_config.antiquotations in
+  Camlp4_config.antiquotations := true;
+  let res = Jq_parser.Gram.parse_string json_eoi loc s in
+  Camlp4_config.antiquotations := q;
+  res
+
+let expand_expr loc _ s =
+  let ast = parse_quot_string loc s in
+  let meta_ast = Jq_ast.MetaExpr.meta_t loc ast in
+  let exp_ast = aq_expander#expr meta_ast in
+  exp_ast
+
+let expand_str_item loc _ s =
+  let exp_ast = expand_expr loc None s in
+  <:str_item@loc< $exp:exp_ast$ >>
+
+let expand_patt loc _ s =
+  let ast = parse_quot_string loc s in
+  let meta_ast = Jq_ast.MetaPatt.meta_t loc ast in
+  aq_expander#patt meta_ast
 
 ;;
 
-add_quotation "json" Jq_parser.json Jq_ast.MetaExpr.meta_t Jq_ast.MetaPatt.meta_t;
-Q.default := "json";
+Q.add "json" Q.DynAst.expr_tag expand_expr;
+Q.add "json" Q.DynAst.patt_tag expand_patt;
+Q.add "json" Q.DynAst.str_item_tag expand_str_item;
+Q.default := "json"
