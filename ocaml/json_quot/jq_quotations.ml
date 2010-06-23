@@ -23,6 +23,7 @@ object
           | "flo" -> <:expr< Jq_ast.Jq_number (string_of_float $e$) >>
           | "str" -> <:expr< Jq_ast.Jq_string $e$ >>
           | "list" -> <:expr< Jq_ast.t_of_list $e$ >>
+          | "alist" -> <:expr< Jq_ast.t_of_list (List.map (fun (k, v) -> Jq_ast.Jq_colon (Jq_ast.Jq_string k, v)) $e$) >>
           | _ -> e
         end
       | e -> super#expr e

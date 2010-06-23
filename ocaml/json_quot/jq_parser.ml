@@ -20,7 +20,7 @@ comma_list: [[
 ]];
 
 kv_comma_list: [[
-  `ANTIQUOT ("list" as n, s) -> Jq_Ant (_loc, mk_anti n s)
+  `ANTIQUOT ("alist" as n, s) -> Jq_Ant (_loc, mk_anti n s)
 | e1 = SELF; ","; e2 = SELF -> Jq_comma (e1, e2)
 | e1 = json; ":"; e2 = json -> Jq_colon (e1, e2)
 | -> Jq_nil
