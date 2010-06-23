@@ -1,11 +1,9 @@
 * revisit Jq_print
 * handle ints in number parsing
 * handle exponents in number parsing
-* be consistent with revised vs. original syntax
 * get locations right
 * have to do #camlp4o before #require "json_quot" at toplevel, why?
 * return cleaned-up AST without extra constructors
    maybe Json_type from json-wheel?
 * simplify Jq_print.JSString?
 * func to validate a Jq_ast.t? can blow up Jq_print with invalid
-* be careful with trailing list comma in Jq_print

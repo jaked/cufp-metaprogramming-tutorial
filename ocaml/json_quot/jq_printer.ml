@@ -152,13 +152,10 @@ let rec t ppf = function
   | Jq_comma _ -> assert false
 
 and commas ppf e =
-  match e with
-    | Jq_nil -> ()
-    | Jq_comma (t1, t2) ->
-        commas ppf t1;
-        fprintf ppf ",@;<1 2>";
-        commas ppf t2;
-    | _ ->
-        t ppf e
+  let rec loop = function
+    | [] -> ()
+    | [ e ] -> t ppf e
+    | e :: es -> fprintf ppf "%a,@;<1 2>" t e; loop es in
+  loop (Jq_ast.list_of_t e [])
 
 let escaped = JSString.escaped
