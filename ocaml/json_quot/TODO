@@ -1,6 +1,4 @@
 * revisit Jq_print
-* handle ints in number parsing
-* handle exponents in number parsing
 * get locations right
 * have to do #camlp4o before #require "json_quot" at toplevel, why?
 * return cleaned-up AST without extra constructors

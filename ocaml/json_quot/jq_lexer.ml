@@ -25,7 +25,7 @@ module Token = struct
       | NUMBER s        -> sf "NUMBER %s" s
       | STRING s        -> sf "STRING \"%s\"" s
       | ANTIQUOT (n, s) -> sf "ANTIQUOT %s: %S" n s
-      | EOI          -> sf "EOI"
+      | EOI             -> sf "EOI"
 
   let print ppf x = pp_print_string ppf (to_string x)
 
@@ -126,10 +126,10 @@ let regexp uppercase = ['A'-'Z' '\192'-'\214' '\216'-'\222']
 let regexp identchar =
   ['A'-'Z' 'a'-'z' '_' '\192'-'\214' '\216'-'\246' '\248'-'\255' '\'' '0'-'9' ]
 let regexp ident = (lowercase|uppercase) identchar*
-let regexp locname = ident
+let regexp hex = ['0'-'9''a'-'f''A'-'F']
 
 let regexp newline = ('\010' | '\013' | "\013\010")
-let regexp blank = [' ' '\009' '\012']
+let regexp blank = [' ' '\009']
 
 let error c s = Loc.raise (current_loc c) (Token.Error.E s)
 
@@ -137,48 +137,46 @@ let error c s = Loc.raise (current_loc c) (Token.Error.E s)
 
 let store_lexeme c =
   Buffer.add_string c.buffer (Ulexing.utf8_lexeme c.lexbuf)
-let store_ascii c = Buffer.add_char c.buffer
+
 let store_code c = Utf8.store c.buffer
+let store_ascii c = Buffer.add_char c.buffer
+
 let get_stored_string c =
   let s = Buffer.contents c.buffer in
   Buffer.reset c.buffer;
   s
 
-(* Parse characters literals \123; \x123; *)
+(* Parse hex escapes *)
 
-let hexa_digit = function
+let hex_digit = function
   | '0'..'9' as c -> (Char.code c) - (Char.code '0')
   | 'a'..'f' as c -> (Char.code c) - (Char.code 'a') + 10
   | 'A'..'F' as c -> (Char.code c) - (Char.code 'A') + 10
   | _ -> -1
 
-let parse_char cx base i =
+let parse_hex cx i =
   let s = L.latin1_sub_lexeme cx.lexbuf i (L.lexeme_length cx.lexbuf - i - 1) in
   let r = ref 0 in
-  for i = 0 to String.length s - 1 do
-    let c = hexa_digit s.[i] in
-    if (c >= base) || (c < 0) then
-      error cx "invalid digit";
-    r := !r * base + c;
-  done;
+  String.iter
+    (fun c ->
+       let c = hex_digit c in
+       if c >= 16 || c < 0 then error cx "Invalid hex digit";
+       r := !r * 16 + c)
+    s;
   !r
-
-let regexp ncname_char =
-  xml_letter | xml_digit | [ '$' '_' ] | xml_combining_char | xml_extender | "\\."
-let regexp ncname = ( xml_letter ncname_char* ) | ('_' ncname_char+) | ('$' '$' ncname_char* )
-let regexp qname = (ncname ':')? ncname
 
 let illegal c = error c "Illegal character"
 
 let rec token c = lexer
+  | eof -> EOI
+
   | newline -> next_line c; token c c.lexbuf
   | blank+ -> token c c.lexbuf
 
-  | '-'? ['0'-'9']+ '.' ['0'-'9']* ->
+  | '-'? ['0'-'9']+ ('.' ['0'-'9']* )? (('e'|'E')('+'|'-')?(['0'-'9']+))? ->
       NUMBER (L.utf8_lexeme c.lexbuf)
 
-  | [ "{}[]:," ]
-  | "null" | "true" | "false" ->
+  | [ "{}[]:," ] | "null" | "true" | "false" ->
       KEYWORD (L.utf8_lexeme c.lexbuf)
 
   | '"' ->
@@ -192,68 +190,81 @@ let rec token c = lexer
       let aq = antiquot c lexbuf in
       c.enc := Ulexing.Utf8;
       aq
-  | eof -> EOI
+
   | _ -> illegal c
 
 and string c = lexer
+| eof | newline -> error c "Unterminated string"
+
 | '"' -> ()
-| '\\' ['\\' '"' '\''] ->
-    store_ascii c (L.latin1_lexeme_char c.lexbuf 1);
-    string c c.lexbuf
-| "\\n" ->
-    store_ascii c '\n'; string c c.lexbuf
-| "\\t" ->
-    store_ascii c '\t'; string c c.lexbuf
-| "\\r" ->
-    store_ascii c '\r'; string c c.lexbuf
-| '\\' ['0'-'9']+ ';' ->
-    store_code c (parse_char c 10 1);
-    string c c.lexbuf
-| '\\' 'x' ['0'-'9' 'a'-'f' 'A'-'F']+ ';' ->
-    store_code c (parse_char c 16 2);
-    string c c.lexbuf
-| '\\' ->
-    illegal c
-| eof | newline ->
-    error c "Unterminated string"
-| _ ->
-    store_lexeme c;
+
+| '\\' ['"' '\\' '\\' '/'] ->
+    store_ascii c (Ulexing.latin1_lexeme_char c.lexbuf 1);
     string c c.lexbuf
 
+| "\\b" -> store_ascii c '\n'; string c c.lexbuf
+| "\\f" -> store_ascii c '\012'; string c c.lexbuf
+| "\\n" -> store_ascii c '\n'; string c c.lexbuf
+| "\\r" -> store_ascii c '\r'; string c c.lexbuf
+| "\\t" -> store_ascii c '\t'; string c c.lexbuf
+
+| '\\' 'u' hex hex hex hex ->
+    store_code c (parse_hex c 2);
+    string c c.lexbuf
+
+| '\\' -> illegal c
+
+| _ -> store_lexeme c; string c c.lexbuf
+
 and antiquot c = lexer
+| eof -> error c "Unterminated antiquotation"
+
 | '$' -> ANTIQUOT ("", "")
-| ('`'? (identchar* |'.'+ )) ':' ->
-    (* Ulex does not support as patterns like ocamllex *)
-    let name = Ulexing.utf8_lexeme c.lexbuf in
-    let name = String.sub name 0 (String.length name - 1) in
+
+| ident ':' ->
+    let name = Ulexing.latin1_sub_lexeme c.lexbuf 0 (Ulexing.lexeme_length c.lexbuf - 1) in
     antiquot_loop c c.lexbuf;
     ANTIQUOT (name, get_stored_string c)
+
 | newline ->
     next_line c;
     store_lexeme c;
     antiquot_loop c c.lexbuf;
     ANTIQUOT ("", get_stored_string c)
+
 | _ ->
     store_lexeme c;
     antiquot_loop c c.lexbuf;
     ANTIQUOT ("", get_stored_string c)
 
 and antiquot_loop c = lexer
-| '$' -> ()
 | eof -> error c "Unterminated antiquotation"
-| newline -> next_line c; antiquot_loop c c.lexbuf
-| '<' (':' ident)? ('@' locname)? '<' ->
+
+| '$' -> ()
+
+| newline ->
+    next_line c;
+    store_lexeme c;
+    antiquot_loop c c.lexbuf
+
+| '<' (':' ident)? ('@' ident)? '<' ->
     store_lexeme c;
     quotation c c.lexbuf;
     antiquot_loop c c.lexbuf
+
 | _ ->
     store_lexeme c;
     antiquot_loop c c.lexbuf
 
 and quotation c = lexer
-| ">>" -> store_lexeme c
 | eof -> error c "Unterminated quotation"
-| newline -> c.loc <- Loc.move_line 1 c.loc; quotation c c.lexbuf
+
+| ">>" -> store_lexeme c
+
+| newline ->
+    c.loc <- Loc.move_line 1 c.loc;
+    quotation c c.lexbuf
+
 | _ ->
     store_lexeme c;
     quotation c c.lexbuf
