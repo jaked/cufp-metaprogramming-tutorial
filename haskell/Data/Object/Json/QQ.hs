@@ -54,9 +54,6 @@ type Json = Object ByteString JsonScalar
 jsonQ :: Parser JsonQ
 jsonQ = dataObject (orAnt stringLiteral) (orAnt jsonScalar)
 
-type KeyEnv = [(TH.Name, ByteString)]
-type ScaEnv = [(TH.Name, JsonScalar)]
-
 parseJsonQ :: String -> Q JsonQ
 parseJsonQ inp = do loc <- TH.location
                     let sn = loc_filename loc
