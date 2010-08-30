@@ -54,12 +54,12 @@ type Json = Object ByteString JsonScalar
 jsonQ :: Parser JsonQ
 jsonQ = dataObject (orAnt stringLiteral) (orAnt jsonScalar)
 
-parseJsonQ :: String -> Q JsonQ
-parseJsonQ inp = do loc <- TH.location
-                    let sn = loc_filename loc
-                        pos = loc_start loc
-                    either (fail . show) return $
-                      parseWithPos jsonQ sn pos inp
+parseQ :: Parser a -> String -> Q a
+parseQ p inp = do loc <- TH.location
+                  let sn = loc_filename loc
+                      pos = loc_start loc
+                  either (fail . show) return $
+                    parseWithPos p sn pos inp
 
 antiVarE :: MayAnti a -> Maybe TH.ExpQ
 antiVarE (V _) = Nothing
@@ -114,4 +114,4 @@ json :: QuasiQuoter
 json = QuasiQuoter jsonE jsonP
   where jsonP s = parseJsonQ s >>= dataToPatQ (const Nothing `extQ` antiScalarP `extQ` antiKeyP)
         -- jsonE s = parseJsonQ s >>= dataToExpQ (const Nothing `extQ` antiScalarE `extQ` antiKeyE)
-        jsonE s = coe ''Json . lift =<< parseJsonQ s
+        jsonE s = coe ''Json . lift =<< parseQ jsonQ s
