@@ -54,15 +54,8 @@ type Json = Object ByteString JsonScalar
 jsonQ :: Parser JsonQ
 jsonQ = dataObject (orAnt stringLiteral) (orAnt jsonScalar)
 
-orAnt2 :: Parser a -> Parser ([(TH.Name,a)] -> a)
-orAnt2 p = (flip lookup <$> antiquotation) <|> (const <$> p)
-
 type KeyEnv = [(TH.Name, ByteString)]
 type ScaEnv = [(TH.Name, JsonScalar)]
-type JsonQ2 = Object (KeyEnv -> ByteString) (ScaEnv -> JsonScalar)
-
-jsonQ2 :: Parser JsonQ2
-jsonQ2 = dataObject (orAnt2 stringLiteral) (orAnt2 jsonScalar)
 
 parseJsonQ :: String -> Q JsonQ
 parseJsonQ inp = do loc <- TH.location
