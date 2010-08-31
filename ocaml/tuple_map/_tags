@@ -1,0 +1,2 @@
+<tuple_map.ml> : syntax_camlp4o, pkg_camlp4.quotations.o
+<test.ml> : syntax_camlp4o, pkg_camlp4, use_tuple_map
