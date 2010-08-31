@@ -230,11 +230,7 @@ and antiquot_loop c = lexer
 | '<' (':' ident)? ('@' ident)? '<' ->
     store_lexeme c;
     (*
-      XXX
-      if the quotation is JSON we should really switch back to UTF8.
-      since we just copy chars here I think the only problem is that
-      the line numbers could get screwed up if \n appears as part of a
-      code point.
+      XXX does it matter if we switch back to UTF8 here?
     *)
     quotation c c.lexbuf;
     antiquot_loop c c.lexbuf
