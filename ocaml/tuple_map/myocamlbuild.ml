@@ -81,9 +81,5 @@ let _ = dispatch begin function
        flag ["ocaml"; "pkg_threads"; "compile"] (S[A "-thread"]);
        flag ["ocaml"; "pkg_threads"; "link"] (S[A "-thread"]);
        flag ["ocaml"; "pkg_threads"; "infer_interface"] (S[A "-thread"]);
-
-       flag ["ocaml"; "compile"; "use_tuple_map"] (S[A "-ppopt"; A"tuple_map.cmo"]);
-       flag ["ocaml"; "dep"; "use_tuple_map"] (S[A "-ppopt"; A"tuple_map.cmo"]);
-       dep ["ocaml"; "ocamldep"; "use_tuple_map"] ["tuple_map.cmo"];
   | _ -> ()
 end
