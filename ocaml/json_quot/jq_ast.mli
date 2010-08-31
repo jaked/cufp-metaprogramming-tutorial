@@ -2,8 +2,8 @@ open Camlp4.PreCast
 
 type t =
   | Jq_null
-  | Jq_bool   of string
-  | Jq_number of string
+  | Jq_bool   of bool
+  | Jq_number of float
   | Jq_string of string
   | Jq_array  of t
   | Jq_object of t
@@ -12,7 +12,7 @@ type t =
   | Jq_comma  of t * t
   | Jq_nil
 
-  | Jq_Ant    of Camlp4.PreCast.Loc.t * string
+  | Jq_Ant    of Loc.t * string
 
 module MetaExpr :
 sig

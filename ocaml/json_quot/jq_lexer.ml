@@ -1,33 +1,40 @@
 (* adapted from CDuce parser/ulexer.ml and camlp4/Camlp4/Struct/Lexer.mll *)
 
-open Camlp4.PreCast
+module Loc = Camlp4.PreCast.Loc
 
-module Loc = Loc
+module Error =
+struct
+  type t = string
+  exception E of string
+  let print = Format.pp_print_string
+  let to_string x = x
+end
+let _ = let module M = Camlp4.ErrorHandler.Register(Error) in ()
 
 type token =
-    | KEYWORD  of string
-    | NUMBER   of string
-    | STRING   of string
-    | ANTIQUOT of string * string
-    | EOI
+  | KEYWORD  of string
+  | NUMBER   of string
+  | STRING   of string
+  | ANTIQUOT of string * string
+  | EOI
 
-module Token = struct
-  open Format
+module Token =
+struct
   module Loc = Loc
+  module Error = Error
+
   type t = token
-  type token = t
 
-  let sf = Printf.sprintf
-
-  let to_string =
-    function
+  let to_string t =
+    let sf = Printf.sprintf in
+    match t with
       | KEYWORD s       -> sf "KEYWORD %S" s
       | NUMBER s        -> sf "NUMBER %s" s
       | STRING s        -> sf "STRING \"%s\"" s
       | ANTIQUOT (n, s) -> sf "ANTIQUOT %s: %S" n s
       | EOI             -> sf "EOI"
 
-  let print ppf x = pp_print_string ppf (to_string x)
+  let print ppf x = Format.pp_print_string ppf (to_string x)
 
   let match_keyword kwd =
     function
@@ -38,45 +45,22 @@ module Token = struct
     function
       | KEYWORD s | NUMBER s | STRING s -> s
       | tok ->
-          invalid_arg ("Cannot extract a string from this token: "^
-                          to_string tok)
+          invalid_arg
+            ("Cannot extract a string from this token: " ^
+               to_string tok)
 
-  module Error = struct
-    type t = string
-    exception E of string
-    let print = pp_print_string
-    let to_string x = x
-  end
-  let _ = let module M = Camlp4.ErrorHandler.Register(Error) in ()
-
-  module Filter = struct
+  module Filter =
+  struct
     type token_filter = (t, Loc.t) Camlp4.Sig.stream_filter
-
-    type t =
-        { is_kwd : string -> bool;
-          mutable filter : token_filter }
-
-    let mk is_kwd =
-      { is_kwd = is_kwd;
-        filter = (fun s -> s) }
-
-    let filter x strm = x.filter strm
-    let define_filter x f = x.filter <- f x.filter
-
+    type t = unit
+    let mk _ = ()
+    let filter _ strm = strm
+    let define_filter _ _ = ()
     let keyword_added _ _ _ = ()
     let keyword_removed _ _ = ()
   end
 
 end
-
-module Error = struct
-  open Format
-  type t = string
-  exception E of string
-  let print = pp_print_string
-  let to_string x = x
-end
-let _ = let module M = Camlp4.ErrorHandler.Register(Error) in ()
 
 module L = Ulexing
 
@@ -89,13 +73,8 @@ type context = {
   buffer      : Buffer.t;
 }
 
-let dump_loc loc =
-  let (fn, bl, bb, bo, el, eb, eo, g) = Loc.to_tuple loc in
-  Format.eprintf "%s %d %d %d %d %d %d\n" fn bl bb bo el eb eo
-
-(* XXX this is kind of gross *)
 let current_loc c =
-  let (fn, bl, bb, bo, el, eb, eo, g) = Loc.to_tuple c.loc in
+  let (fn, bl, bb, bo, el, eb, _, g) = Loc.to_tuple c.loc in
   let bl, bb, bo =
     match c.start_loc with
       | Some loc ->
@@ -121,17 +100,16 @@ let next_line c =
   let eb = bb in
   c.loc <- Loc.of_tuple (fn, bl, bb, bo, el, eb, eo, g)
 
-let regexp lowercase = ['a'-'z' '\223'-'\246' '\248'-'\255' '_']
-let regexp uppercase = ['A'-'Z' '\192'-'\214' '\216'-'\222']
-let regexp identchar =
-  ['A'-'Z' 'a'-'z' '_' '\192'-'\214' '\216'-'\246' '\248'-'\255' '\'' '0'-'9' ]
-let regexp ident = (lowercase|uppercase) identchar*
+let error c s = Loc.raise (current_loc c) (Error.E s)
+
+let regexp identinit =
+  ['A'-'Z' 'a'-'z' '\192'-'\214' '\216'-'\246' '\248'-'\255' ]
+let regexp identchar = (identinit | ['_' '\'' '0'-'9' ])
+let regexp ident = identinit identchar*
 let regexp hex = ['0'-'9''a'-'f''A'-'F']
 
 let regexp newline = ('\010' | '\013' | "\013\010")
 let regexp blank = [' ' '\009']
-
-let error c s = Loc.raise (current_loc c) (Token.Error.E s)
 
 (* Buffer for string literals *)
 
@@ -173,8 +151,9 @@ let rec token c = lexer
   | newline -> next_line c; token c c.lexbuf
   | blank+ -> token c c.lexbuf
 
-  | '-'? ['0'-'9']+ ('.' ['0'-'9']* )? (('e'|'E')('+'|'-')?(['0'-'9']+))? ->
-      NUMBER (L.utf8_lexeme c.lexbuf)
+  | '-'? ['0'-'9']+ ('.' ['0'-'9']* )?
+      (('e'|'E')('+'|'-')?(['0'-'9']+))? ->
+        NUMBER (L.utf8_lexeme c.lexbuf)
 
   | [ "{}[]:," ] | "null" | "true" | "false" ->
       KEYWORD (L.utf8_lexeme c.lexbuf)
@@ -185,6 +164,7 @@ let rec token c = lexer
       STRING (get_stored_string c)
 
   | "$" ->
+      (* XXX check antiquots *)
       set_start_loc c;
       c.enc := Ulexing.Latin1;
       let aq = antiquot c lexbuf in
@@ -194,48 +174,48 @@ let rec token c = lexer
   | _ -> illegal c
 
 and string c = lexer
-| eof | newline -> error c "Unterminated string"
+  | eof | newline -> error c "Unterminated string"
 
-| '"' -> ()
+  | '"' -> ()
 
-| '\\' ['"' '\\' '\\' '/'] ->
-    store_ascii c (Ulexing.latin1_lexeme_char c.lexbuf 1);
-    string c c.lexbuf
+  | '\\' ['"' '\\' '/'] ->
+      store_ascii c (Ulexing.latin1_lexeme_char c.lexbuf 1);
+      string c c.lexbuf
 
-| "\\b" -> store_ascii c '\n'; string c c.lexbuf
-| "\\f" -> store_ascii c '\012'; string c c.lexbuf
-| "\\n" -> store_ascii c '\n'; string c c.lexbuf
-| "\\r" -> store_ascii c '\r'; string c c.lexbuf
-| "\\t" -> store_ascii c '\t'; string c c.lexbuf
+  | "\\b" -> store_ascii c '\n'; string c c.lexbuf
+  | "\\f" -> store_ascii c '\012'; string c c.lexbuf
+  | "\\n" -> store_ascii c '\n'; string c c.lexbuf
+  | "\\r" -> store_ascii c '\r'; string c c.lexbuf
+  | "\\t" -> store_ascii c '\t'; string c c.lexbuf
 
-| '\\' 'u' hex hex hex hex ->
-    store_code c (parse_hex c 2);
-    string c c.lexbuf
+  | '\\' 'u' hex hex hex hex ->
+      store_code c (parse_hex c 2);
+      string c c.lexbuf
 
-| '\\' -> illegal c
+  | '\\' -> illegal c
 
-| _ -> store_lexeme c; string c c.lexbuf
+  | _ -> store_lexeme c; string c c.lexbuf
 
 and antiquot c = lexer
-| eof -> error c "Unterminated antiquotation"
+  | eof -> error c "Unterminated antiquotation"
 
-| '$' -> ANTIQUOT ("", "")
+  | '$' -> ANTIQUOT ("", "")
 
-| ident ':' ->
-    let name = Ulexing.latin1_sub_lexeme c.lexbuf 0 (Ulexing.lexeme_length c.lexbuf - 1) in
-    antiquot_loop c c.lexbuf;
-    ANTIQUOT (name, get_stored_string c)
+  | ident ':' ->
+      let name = Ulexing.latin1_sub_lexeme c.lexbuf 0 (Ulexing.lexeme_length c.lexbuf - 1) in
+      antiquot_loop c c.lexbuf;
+      ANTIQUOT (name, get_stored_string c)
 
-| newline ->
-    next_line c;
-    store_lexeme c;
-    antiquot_loop c c.lexbuf;
-    ANTIQUOT ("", get_stored_string c)
+  | newline ->
+      next_line c;
+      store_lexeme c;
+      antiquot_loop c c.lexbuf;
+      ANTIQUOT ("", get_stored_string c)
 
-| _ ->
-    store_lexeme c;
-    antiquot_loop c c.lexbuf;
-    ANTIQUOT ("", get_stored_string c)
+  | _ ->
+      store_lexeme c;
+      antiquot_loop c c.lexbuf;
+      ANTIQUOT ("", get_stored_string c)
 
 and antiquot_loop c = lexer
 | eof -> error c "Unterminated antiquotation"
@@ -249,6 +229,13 @@ and antiquot_loop c = lexer
 
 | '<' (':' ident)? ('@' ident)? '<' ->
     store_lexeme c;
+    (*
+      XXX
+      if the quotation is JSON we should really switch back to UTF8.
+      since we just copy chars here I think the only problem is that
+      the line numbers could get screwed up if \n appears as part of a
+      code point.
+    *)
     quotation c c.lexbuf;
     antiquot_loop c c.lexbuf
 
