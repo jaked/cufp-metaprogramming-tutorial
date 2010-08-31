@@ -44,9 +44,18 @@ static expansion
 
 # ASTs in Camlp4
 
+ * the Camlp4 OCaml AST, Camlp4Ast.partial.ml
+ * syntactic classes, some constructors
+ * how to call Camlp4 to see the AST for some concrete syntax
+ * locations
+
 # ASTs in Template Haskell
 
 # OCaml quotations in Camlp4
+
+ * quotation per syntactic class, expr/patt context
+ * antiquotations
+ * the revised syntax :(
 
 # Haskell quotations in Template Haskell
 
@@ -58,7 +67,6 @@ static expansion
 
 # Camlp4-specific features, example
 
- * defining new quotations / antiquotations
  * extending OCaml syntax
 
 # Template Haskell specific features, example
