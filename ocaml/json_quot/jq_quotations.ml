@@ -5,8 +5,9 @@ module AQ = Syntax.AntiquotSyntax
 
 let destruct_aq s =
   let pos = String.index s ':' in
-  let name = String.sub s 2 (pos - 2)
-  and code = String.sub s (pos + 1) (String.length s - pos - 1) in
+  let len = String.length s in
+  let name = String.sub s 0 pos
+  and code = String.sub s (pos + 1) (len - pos - 1) in
   name, code
 
 let aq_expander =
@@ -14,33 +15,31 @@ object
   inherit Ast.map as super
   method expr =
     function
-      | <:expr@_loc< $anti:s$ >> ->
-        let n, c = destruct_aq s in
-        let e = AQ.parse_expr _loc c in
-        begin match n with
-          | "bool" -> <:expr< Jq_ast.Jq_bool $e$ >>
-          | "int" -> <:expr< Jq_ast.Jq_number (string_of_int $e$) >>
-          | "flo" -> <:expr< Jq_ast.Jq_number (string_of_float $e$) >>
-          | "str" -> <:expr< Jq_ast.Jq_string $e$ >>
-          | "list" -> <:expr< Jq_ast.t_of_list $e$ >>
-          | "alist" -> <:expr< Jq_ast.t_of_list (List.map (fun (k, v) -> Jq_ast.Jq_colon (Jq_ast.Jq_string k, v)) $e$) >>
-          | _ -> e
-        end
+      | Ast.ExAnt (_loc, s) ->
+          let n, c = destruct_aq s in
+          let e = AQ.parse_expr _loc c in
+          begin match n with
+            | "bool" -> <:expr< Jq_ast.Jq_bool $e$ >>
+            | "int" -> <:expr< Jq_ast.Jq_number (float_of_int $e$) >>
+            | "flo" -> <:expr< Jq_ast.Jq_number $e$ >>
+            | "str" -> <:expr< Jq_ast.Jq_string $e$ >>
+            | "list" -> <:expr< Jq_ast.t_of_list $e$ >>
+            | "alist" -> <:expr< Jq_ast.t_of_list (List.map (fun (k, v) -> Jq_ast.Jq_colon (Jq_ast.Jq_string k, v)) $e$) >>
+            | _ -> e
+          end
       | e -> super#expr e
   method patt =
     function
-      | <:patt@_loc< $anti:s$ >> ->
-        let _, c = destruct_aq s in
-        AQ.parse_patt _loc c
+      | Ast.PaAnt (_loc, s) ->
+          let _, c = destruct_aq s in
+          AQ.parse_patt _loc c
       | p -> super#patt p
 end
-
-open Jq_lexer (* so Jq_lexer.EOI is in scope, not Camlp4.PreCast.Token.EOI *)
 
 let json_eoi = Jq_parser.Gram.Entry.mk "json_eoi"
 
 EXTEND Jq_parser.Gram
-  json_eoi: [[ x = Jq_parser.json; EOI -> x ]];
+  json_eoi: [[ x = Jq_parser.json; `Jq_lexer.EOI -> x ]];
 END;;
 
 let parse_quot_string loc s =
@@ -53,8 +52,7 @@ let parse_quot_string loc s =
 let expand_expr loc _ s =
   let ast = parse_quot_string loc s in
   let meta_ast = Jq_ast.MetaExpr.meta_t loc ast in
-  let exp_ast = aq_expander#expr meta_ast in
-  exp_ast
+  aq_expander#expr meta_ast
 
 let expand_str_item loc _ s =
   let exp_ast = expand_expr loc None s in

@@ -1,0 +1,6 @@
+name = "tuple_map"
+version = "0.1"
+description = "Map over a tuple"
+requires = "camlp4"
+archive(syntax,preprocessor) = "tuple_map.cmo"
+archive(syntax,toploop) = "tuple_map.cmo"

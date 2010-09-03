@@ -1,7 +1,7 @@
 name = "json_quot"
 version = "0.1"
 description = "JSON quotations"
-requires = "ulex"
+requires = "ulex,camlp4"
 archive(byte) = "json_quot.cma"
 archive(native) = "json_quot.cmxa"
 archive(syntax,toploop) = "ulexing.cma,json_quot.cma,jq_top.cmo"

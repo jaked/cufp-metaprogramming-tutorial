@@ -1,40 +1,29 @@
-module Gram = Camlp4.Struct.Grammar.Static.Make(Jq_lexer)
-
-open Jq_lexer
 open Jq_ast
+open Jq_lexer
 
-let mk_anti n s = "\\$"^n^":"^s
+module Gram = Camlp4.PreCast.MakeGram(Jq_lexer)
 
 let json = Gram.Entry.mk "json"
 
 ;;
 
 EXTEND Gram
-  GLOBAL: json;
+  json: [[
+      "null" -> Jq_null
+    | "true" -> Jq_bool true
+    | "false" -> Jq_bool false
+    | n = NUMBER -> Jq_number (float_of_string n)
+    | s = STRING -> Jq_string s
 
-comma_list: [[
-  `ANTIQUOT ("list" as n, s) -> Jq_Ant (_loc, mk_anti n s)
-| e1 = SELF; ","; e2 = SELF -> Jq_comma (e1, e2)
-| e = json -> e
-| -> Jq_nil
-]];
+    | `ANTIQUOT (""|"bool"|"int"|"flo"|"str"|"list"|"alist" as n, s) ->
+        Jq_Ant (_loc, n ^ ":" ^ s)
 
-kv_comma_list: [[
-  `ANTIQUOT ("alist" as n, s) -> Jq_Ant (_loc, mk_anti n s)
-| e1 = SELF; ","; e2 = SELF -> Jq_comma (e1, e2)
-| e1 = json; ":"; e2 = json -> Jq_colon (e1, e2)
-| -> Jq_nil
-]];
+    | "["; es = SELF; "]" -> Jq_array es
+    | "{"; kvs = SELF; "}" -> Jq_object kvs
 
-json: [[
-  `ANTIQUOT (""|"bool"|"int"|"flo"|"str" as n, s) -> Jq_Ant (_loc, mk_anti n s)
-| n = NUMBER -> Jq_number n
-| s = STRING -> Jq_string s
-| "null" -> Jq_null
-| "true" -> Jq_bool "true"
-| "false" -> Jq_bool "false"
-| "["; es = comma_list; "]" -> Jq_array es
-| "{"; kvs = kv_comma_list; "}" -> Jq_object kvs
-]];
+    | e1 = SELF; ","; e2 = SELF -> Jq_comma (e1, e2)
+    | -> Jq_nil
 
+    | e1 = SELF; ":"; e2 = SELF -> Jq_colon (e1, e2)
+  ]];
 END

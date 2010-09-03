@@ -1,5 +1,6 @@
 name = "json_compr"
 version = "0.1"
 description = "JSON comprehensions"
+requires = "camlp4"
 archive(syntax,preprocessor) = "JsonComprehension.cmo"
 archive(syntax,toploop) = "JsonComprehension.cmo"

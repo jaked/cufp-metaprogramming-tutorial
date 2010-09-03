@@ -1,9 +1,13 @@
+open Camlp4.PreCast (* for Ast refs in generated code *)
+
 module Jq_ast =
 struct
+  type float' = float
+
   type t =
     | Jq_null
-    | Jq_bool   of string
-    | Jq_number of string
+    | Jq_bool   of bool
+    | Jq_number of float'
     | Jq_string of string
     | Jq_array  of t
     | Jq_object of t
@@ -12,15 +16,22 @@ struct
     | Jq_comma  of t * t
     | Jq_nil
 
-    | Jq_Ant    of Camlp4.PreCast.Loc.t * string
+    | Jq_Ant    of Loc.t * string
 end
 
 include Jq_ast
 
-open Camlp4.PreCast (* for Ast refs in generated code *)
+module MetaExpr =
+struct
+  let meta_float' _loc f = <:expr< $`flo:f$ >>
+  include Camlp4Filters.MetaGeneratorExpr(Jq_ast)
+end
 
-module MetaExpr = Camlp4Filters.MetaGeneratorExpr(Jq_ast)
-module MetaPatt = Camlp4Filters.MetaGeneratorPatt(Jq_ast)
+module MetaPatt =
+struct
+  let meta_float' _loc f = <:patt< $`flo:f$ >>
+  include Camlp4Filters.MetaGeneratorPatt(Jq_ast)
+end
 
 let rec t_of_list = function
   | [] -> Jq_nil
