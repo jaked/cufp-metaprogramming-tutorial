@@ -12,3 +12,5 @@ uninstall:
 
 clean:
 	ocamlbuild -clean
+
+.PHONY: _build/tuple_map.cmo
