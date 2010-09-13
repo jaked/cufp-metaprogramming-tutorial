@@ -42,20 +42,57 @@ static expansion
 
 # tuple map in Haskell
 
+# Camlp4: mechanics
+
+How to run Camlp4:
+
+ * `camlp4of [module.cmo] [file.ml]`
+ * show loaded modules: `-loaded-modules`
+ * print original syntax: `-printer o`
+ * show AST for debugging: `-filter Camlp4AstLifter`
+ * take input from command line: `-str [input]`
+ * Ex. `camlp4of -printer o -filter Camlp4AstLifter -str "type t = Foo"`
+
 # ASTs in Camlp4
 
- * the Camlp4 OCaml AST, Camlp4Ast.partial.ml
- * syntactic classes, some constructors
- * how to call Camlp4 to see the AST for some concrete syntax
- * locations
+The Camlp4 AST:
+
+ * `type expr = ... and patt = ... and ctyp = ... and str_item = ... and ...`
+ * e.g. `ExInt` for an int expr, `TySum` for a sum type
+ * see `Camlp4Ast.partial.ml` for full def
+ * somewhat loose---easy to make invalid AST
+ * converted to OCaml AST; see `Camlp4Ast2OCamlAst.ml` for errors
+ * locations added by parser; see `module type Loc` in `Sig.ml` for API
+
+# OCaml quotations
+
+Work with the OCaml AST using OCaml concrete syntax:
+
+ * you can always fall back to AST constructors!
+ * `<:expr< 1, 2 >>` becomes
+   `ExTup (_, (ExCom (_, (ExInt (_, "1")), (ExInt (_, "2")))))`
+ * `<:ctyp< int * int >>` becomes
+   `TyTup (_, (TySta (_, (TyId (_, (IdLid (_, "int")))), (TyId (_, (IdLid (_, "int")))))))`
+ * antiquotations: `<:expr< 1, $x$ >>`, `<:expr< 1, $`int:x$ >>`
+ * see wiki page of quotations / antiquotations
+
+# Revised syntax
+
+Alternative syntax for OCaml:
+
+ * fixes some infelicities in OCaml syntax
+ * makes antiquotation easier (gives more context)
+ * avoid bugs in orginal syntax antiquotations
+ * `list t` instead of `t list`
+ * `match [ patt -> expr | ... ]` instead of `match patt -> expr | ...`
+ * `True` instead of `true`
+ * see doc page for full details
+
+# Examples
+
+ * ...
 
 # ASTs in Template Haskell
-
-# OCaml quotations in Camlp4
-
- * quotation per syntactic class, expr/patt context
- * antiquotations
- * the revised syntax :(
 
 # Haskell quotations in Template Haskell
 

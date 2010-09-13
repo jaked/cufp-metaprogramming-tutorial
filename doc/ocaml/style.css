@@ -1,0 +1,44 @@
+.comment {
+  /* font-lock-comment-face */
+  color: #cd0000;
+}
+.comment-delimiter {
+  /* font-lock-comment-delimiter-face */
+  color: #cd0000;
+}
+.doc {
+  /* font-lock-doc-face */
+  color: #00cd00;
+}
+.function-name {
+  /* font-lock-function-name-face */
+  color: #0000ee;
+  font-weight: bold;
+}
+.tuareg-font-lock-governing {
+  /* tuareg-font-lock-governing-face */
+  color: #0000ee;
+  font-weight: bold;
+}
+.tuareg-font-lock-operator {
+  /* tuareg-font-lock-operator-face */
+  color: #cd0000;
+}
+.type {
+  /* font-lock-type-face */
+  color: #00cd00;
+}
+.variable-name {
+  /* font-lock-variable-name-face */
+  color: #cdcd00;
+}
+.string {
+  /* font-lock-string-face */
+  color: #00cd00;
+}
+.keyword {
+  /* font-lock-keyword-face */
+  color: #00cdcd;
+  font-weight: bold;
+}
+ 

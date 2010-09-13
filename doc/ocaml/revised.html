@@ -1,0 +1,442 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+            "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+<HEAD>
+
+<META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<META name="GENERATOR" content="hevea 1.06">
+<TITLE>
+ The Revised syntax
+</TITLE>
+</HEAD>
+<BODY TEXT=black BGCOLOR=white>
+<A HREF="manual006.html"><IMG SRC ="previous_motif.gif" ALT="Previous"></A>
+<A HREF="index.html"><IMG SRC ="contents_motif.gif" ALT="Up"></A>
+<A HREF="manual008.html"><IMG SRC ="next_motif.gif" ALT="Next"></A>
+<HR>
+<TABLE CELLPADDING=0 CELLSPACING=0 WIDTH="100%">
+<TR><TD BGCOLOR="#2de52d"><DIV ALIGN=center><TABLE>
+<TR><TD><A NAME="htoc31"><B><FONT SIZE=6>Chapter&nbsp;6</FONT></B></A></TD>
+<TD WIDTH="100%" ALIGN=center><B><FONT SIZE=6>The Revised syntax</FONT></B></TD>
+</TR></TABLE></DIV></TD>
+</TR></TABLE>
+<A NAME="c:revised"></A>
+The revised syntax is an alternative syntax for OCaml. Its
+purpose is to be simpler, more regular, more logical than the normal
+syntax, and fix some problems which sometimes result in bugs not
+always easy to find. This syntax was named ``righteous'' instead of
+``revised'' in previous versions.<BR>
+<BR>
+This chapter presents the changes from OCaml to this syntax.<BR>
+<BR>
+<A NAME="toc18"></A><TABLE CELLPADDING=0 CELLSPACING=0 WIDTH="100%">
+<TR><TD BGCOLOR="#66ff66"><DIV ALIGN=center><TABLE>
+<TR><TD><A NAME="htoc32"><B><FONT SIZE=5>6.1</FONT></B></A></TD>
+<TD WIDTH="100%" ALIGN=center><B><FONT SIZE=5>Phrases</FONT></B></TD>
+</TR></TABLE></DIV></TD>
+</TR></TABLE>
+<UL><LI>
+A simple semicolon ends the sentences, in
+structures and in signatures. The double semicolon is not a
+token. There is no ambiguity with the sequence, which has a special
+construction (see&nbsp;<A HREF="#s:imperative">6.2</A>).<BR>
+<BR>
+<LI>The declaration of a global variable is introduced by the keyword
+``<CODE>value</CODE>'', ``<CODE>let</CODE>'' being reserved to the
+construction ``<CODE>let..in</CODE>'':
+
+<center><table border=0 width="75%"><tr><th align=left width="50%">OCaml</th><th align=left width="50%">Revised</th></tr>
+<tr><td><tt>let x = 23;;</tt></td><td><tt>value x = 23;</tt></td></tr>
+<tr><td><tt>let x = 23 in x + 7;;</tt></td><td><tt>let x = 23 in x + 7;</tt></td></tr>
+</table></center>
+<BR>
+<BR>
+<LI>In interfaces, one must use ``<CODE>value</CODE>'', too, instead of
+``<CODE>val</CODE>''.
+
+<center><table border=0 width="75%"><tr><th align=left width="50%">OCaml</th><th align=left width="50%">Revised</th></tr>
+<tr><td><tt>val x : int;;</tt></td><td><tt>value x : int;</tt></td></tr>
+</table></center>
+</UL>
+<A NAME="toc19"></A><TABLE CELLPADDING=0 CELLSPACING=0 WIDTH="100%">
+<TR><TD BGCOLOR="#66ff66"><DIV ALIGN=center><TABLE>
+<TR><TD><A NAME="htoc33"><B><FONT SIZE=5>6.2</FONT></B></A></TD>
+<TD WIDTH="100%" ALIGN=center><B><FONT SIZE=5>Imperative constructions</FONT></B></TD>
+</TR></TABLE></DIV></TD>
+</TR></TABLE>
+<A NAME="s:imperative"></A>
+<UL><LI>
+The sequence is introduced by the keyword
+``<CODE>do</CODE>'' followed by ``<CODE>{</CODE>'' and terminated by ``<CODE>}</CODE>''
+(it is possible to put a semicolon after the last expression):
+
+<center><table border=0 width="75%"><tr><th align=left width="50%">OCaml</th><th align=left width="50%">Revised</th></tr>
+<tr><td><tt>e1; e2; e3; e4</tt></td><td><tt>do { e1; e2; e3; e4 }</tt></td></tr>
+</table></center>
+<BR>
+<BR>
+<LI>The body of ``<CODE>for</CODE>'' and ``<CODE>while</CODE>'' has the same
+syntax:
+
+<center><table border=0 width="75%"><tr><th align=left width="50%">OCaml</th><th align=left width="50%">Revised</th></tr>
+<tr><td><tt>while e1 do</tt></td><td><tt>while e1 do {</tt></td></tr>
+<tr><td><tt>&nbsp;&nbsp;e2; e3; e4</tt></td><td><tt>&nbsp;&nbsp;e2; e3; e4</tt></td></tr>
+<tr><td><tt>done</tt></td><td><tt>}</tt></td></tr>
+</table></center>
+</UL>
+<A NAME="toc20"></A><TABLE CELLPADDING=0 CELLSPACING=0 WIDTH="100%">
+<TR><TD BGCOLOR="#66ff66"><DIV ALIGN=center><TABLE>
+<TR><TD><A NAME="htoc34"><B><FONT SIZE=5>6.3</FONT></B></A></TD>
+<TD WIDTH="100%" ALIGN=center><B><FONT SIZE=5>Tuples and lists</FONT></B></TD>
+</TR></TABLE></DIV></TD>
+</TR></TABLE>
+<UL><LI>
+Parentheses are mandatory in tuples:
+
+<center><table border=0 width="75%"><tr><th align=left width="50%">OCaml</th><th align=left width="50%">Revised</th></tr>
+<tr><td><tt>1, "hello", World</tt></td><td><tt>(1, "hello", World)</tt></td></tr>
+</table></center>
+<BR>
+<BR>
+<LI>Lists are always enclosed with ``<CODE>[</CODE>'' and ``<CODE>]</CODE>''.
+Their syntax is:
+<DIV ALIGN=center>
+<TABLE CELLSPACING=2 CELLPADDING=0>
+<TR><TD ALIGN=left NOWRAP><EM>list</EM></TD>
+<TD ALIGN=right NOWRAP>::=</TD>
+<TD ALIGN=left NOWRAP><CODE>[</CODE> <EM>elem-list opt-cons</EM> <CODE>]</CODE></TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><EM>elem-list</EM></TD>
+<TD ALIGN=right NOWRAP>::=</TD>
+<TD ALIGN=left NOWRAP><EM>expression</EM> <CODE>;</CODE> <EM>elem-list</EM> |
+<EM>expression</EM></TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><EM>opt-cons</EM></TD>
+<TD ALIGN=right NOWRAP>::=</TD>
+<TD ALIGN=left NOWRAP><CODE>::</CODE> <EM>expression</EM> | <EM>(*empty*)</EM></TD>
+</TR></TABLE>
+</DIV>
+A list is a sequence of expressions separated by semicolons, optionally
+ended by a ``<CODE>::</CODE>'' and an expression, the whole being enclosed
+by brackets.
+Examples:
+
+<center><table border=0 width="75%"><tr><th align=left width="50%">OCaml</th><th align=left width="50%">Revised</th></tr>
+<tr><td><tt>x::y</tt></td><td><tt>[x::y]</tt></td></tr>
+<tr><td><tt>[x; y; z]</tt></td><td><tt>[x; y; z]</tt></td></tr>
+<tr><td><tt>x::y::z::t</tt></td><td><tt>[x::[y::[z::t]]]</tt></td></tr>
+<tr><td><tt>x::y::z::t</tt></td><td><tt>[x; y; z :: t]</tt></td></tr>
+</table></center>
+Note the two ways to write the last case.</UL>
+<A NAME="toc21"></A><TABLE CELLPADDING=0 CELLSPACING=0 WIDTH="100%">
+<TR><TD BGCOLOR="#66ff66"><DIV ALIGN=center><TABLE>
+<TR><TD><A NAME="htoc35"><B><FONT SIZE=5>6.4</FONT></B></A></TD>
+<TD WIDTH="100%" ALIGN=center><B><FONT SIZE=5>Irrefutable patterns</FONT></B></TD>
+</TR></TABLE></DIV></TD>
+</TR></TABLE><BR>
+There is a notion of ``irrefutable patterns'' used by some syntactic
+constructions. Matching against these patterns never fails. An
+``irrefutable pattern'' is either:
+<UL><LI>
+A variable.
+<LI>The wildcard ``<CODE>_</CODE>''.
+<LI>The constructor ``<CODE>()</CODE>''.
+<LI>A tuple with irrefutable patterns.
+<LI>A record with irrefutable patterns.
+<LI>An irrefutable pattern with a type constraint.
+</UL>
+Note that the term ``irrefutable'' does not apply to all patterns
+which never fail: constructors alone in their type declarations,
+except ``<CODE>()</CODE>'', are not said ``irrefutable''.<BR>
+<BR>
+<A NAME="toc22"></A><TABLE CELLPADDING=0 CELLSPACING=0 WIDTH="100%">
+<TR><TD BGCOLOR="#66ff66"><DIV ALIGN=center><TABLE>
+<TR><TD><A NAME="htoc36"><B><FONT SIZE=5>6.5</FONT></B></A></TD>
+<TD WIDTH="100%" ALIGN=center><B><FONT SIZE=5>Constructions with matching</FONT></B></TD>
+</TR></TABLE></DIV></TD>
+</TR></TABLE>
+<UL><LI>
+The keyword ``<CODE>function</CODE>'' no longer exists. One must use
+only ``<CODE>fun</CODE>''.<BR>
+<BR>
+<LI>The pattern matchings, in constructions with ``<CODE>fun</CODE>'',
+``<CODE>match</CODE>'' and ``<CODE>try</CODE>'' are closed with brackets: an open
+bracket ``<CODE>[</CODE>'' before the first case, and a close bracket
+``<CODE>]</CODE>'' after the last one:
+
+<center><table border=0 width="75%"><tr><th align=left width="50%">OCaml</th><th align=left width="50%">Revised</th></tr>
+<tr><td><tt>match e with</tt></td><td><tt>match e with</tt></td></tr>
+<tr><td><tt>&nbsp;&nbsp;p1 -> e1</tt></td><td><tt>[ p1 -> e1</tt></td></tr>
+<tr><td><tt>| p2 -> e2;;</tt></td><td><tt>| p2 -> e2 ];</tt></td></tr>
+
+<tr><td><tt>fun x -> x;;</tt></td><td><tt>fun [x -> x];</tt></td></tr>
+</table></center>
+But if there is only one case and if the pattern is <EM>irrefutable</EM>, the brackets are not mandatory. These examples work
+identically in OCaml and in revised syntax:
+
+<center><table border=0 width="75%"><tr><th align=left width="50%">OCaml</th><th align=left width="50%">Revised</th></tr>
+<tr><td><tt>fun x -> x</tt></td><td><tt>fun x -> x</tt></td></tr>
+<tr><td><tt>fun {foo=(y, _)} -> y</tt></td><td><tt>fun {foo=(y, _)} -> y</tt></td></tr>
+</table></center>
+The curryfied pattern matching can be done with ``<CODE>fun</CODE>'', but
+only with <EM>irrefutable</EM> patterns:
+
+<center><table border=0 width="75%"><tr><th align=left width="50%">OCaml</th><th align=left width="50%">Revised</th></tr>
+<tr><td><tt>fun x (y, z) -> t</tt></td><td><tt>fun x (y, z) -> t</tt></td></tr>
+<tr><td><tt>fun x y (C z) -> t</tt></td><td><tt>fun x y -> fun [C z -> t]</tt></td></tr>
+</table></center>
+<BR>
+<BR>
+<LI>It is possible to write the empty function,
+raising the exception ``<CODE>Match_failure</CODE>'' whichever parameter is
+applied, the empty ``match'', raising ``<CODE>Match_failure</CODE>'' after
+having evaluated its expression, and the empty ``try'', equivalent to
+its expression without <CODE>try</CODE>:
+<PRE>
+    fun []
+    match e with []
+    try e with []
+</PRE><BR>
+<BR>
+<LI>The patterns after ``<CODE>let</CODE>'' and ``<CODE>value</CODE>'' must be
+irrefutable. The following OCaml expression:
+<PRE>
+    let f (x::y) = ...
+</PRE>must be written in Revised:
+<PRE>
+    let f = fun [ [x::y] -&gt; ...
+</PRE><BR>
+<BR>
+<LI>The construction ``<CODE>where</CODE>'' is back, but one can write only
+one bind:
+<CODE>e where x = y</CODE>
+but not:
+<CODE>e where x = y and z = t</CODE>
+</UL>
+<A NAME="toc23"></A><TABLE CELLPADDING=0 CELLSPACING=0 WIDTH="100%">
+<TR><TD BGCOLOR="#66ff66"><DIV ALIGN=center><TABLE>
+<TR><TD><A NAME="htoc37"><B><FONT SIZE=5>6.6</FONT></B></A></TD>
+<TD WIDTH="100%" ALIGN=center><B><FONT SIZE=5>Mutables and assignment</FONT></B></TD>
+</TR></TABLE></DIV></TD>
+</TR></TABLE>
+<UL><LI>
+The instruction ``<CODE>&lt;-</CODE>'' is written ``<CODE>:=</CODE>'':
+
+<center><table border=0 width="75%"><tr><th align=left width="50%">OCaml</th><th align=left width="50%">Revised</th></tr>
+<tr><td><tt>x.f <- y</tt></td><td><tt>x.f := y</tt></td></tr>
+</table></center>
+<BR>
+<BR>
+<LI>The ``<CODE>ref</CODE>'' type is declared as a record type with one
+field named ``<CODE>val</CODE>'', instead of ``<CODE>contents</CODE>''. The
+operator ``<CODE>!</CODE>'' does not exist any more, and references are
+assigned like the other mutables:
+
+<center><table border=0 width="75%"><tr><th align=left width="50%">OCaml</th><th align=left width="50%">Revised</th></tr>
+<tr><td><tt>x := !x + y</tt></td><td><tt>x.val := x.val + y</tt></td></tr>
+</table></center>
+</UL>
+<A NAME="toc24"></A><TABLE CELLPADDING=0 CELLSPACING=0 WIDTH="100%">
+<TR><TD BGCOLOR="#66ff66"><DIV ALIGN=center><TABLE>
+<TR><TD><A NAME="htoc38"><B><FONT SIZE=5>6.7</FONT></B></A></TD>
+<TD WIDTH="100%" ALIGN=center><B><FONT SIZE=5>Types</FONT></B></TD>
+</TR></TABLE></DIV></TD>
+</TR></TABLE>
+<A NAME="Types"></A>
+<UL><LI>
+The type constructors are before their type parameters, which
+are curryfied:
+
+<center><table border=0 width="75%"><tr><th align=left width="50%">OCaml</th><th align=left width="50%">Revised</th></tr>
+<tr><td><tt>int list</tt></td><td><tt>list int</tt></td></tr>
+<tr><td><tt>('a, bool) Hashtbl.t</tt></td><td><tt>Hashtbl.t 'a bool</tt></td></tr>
+<tr><td><tt>type 'a foo =</tt></td><td><tt>type foo 'a =</tt></td></tr>
+<tr><td><tt>&nbsp;&nbsp;&nbsp;'a list list;;</tt></td><td><tt>&nbsp;&nbsp;&nbsp;list (list 'a);</tt></td></tr>
+</table></center>
+<BR>
+<BR>
+<LI>The abstract types are represented by a unbound type variable:
+
+<center><table border=0 width="75%"><tr><th align=left width="50%">OCaml</th><th align=left width="50%">Revised</th></tr>
+<tr><td><tt>type 'a foo;;</tt></td><td><tt>type foo 'a = 'b;</tt></td></tr>
+<tr><td><tt>type bar;;</tt></td><td><tt>type bar = 'a;</tt></td></tr>
+</table></center>
+<BR>
+<BR>
+<LI>Parentheses are mandatory in tuples of types:
+
+<center><table border=0 width="75%"><tr><th align=left width="50%">OCaml</th><th align=left width="50%">Revised</th></tr>
+<tr><td><tt>int * bool</tt></td><td><tt>(int * bool)</tt></td></tr>
+</table></center>
+<BR>
+<BR>
+<LI>In declaration of a concrete type, brackets must enclose
+the constructor declarations:
+
+<center><table border=0 width="75%"><tr><th align=left width="50%">OCaml</th><th align=left width="50%">Revised</th></tr>
+<tr><td><tt>type t = A of i | B;;</tt></td><td><tt>type t = [ A of i | B ];</tt></td></tr>
+</table></center>
+<BR>
+<BR>
+<LI>It is possible to make the empty type, without constructor:
+<PRE>
+    type foo = [];
+</PRE><BR>
+<BR>
+<LI>There is a syntax difference between data constructors with
+several parameters and data constructors with one parameter of type
+tuple.<BR>
+<BR>
+The declaration of a data constructor with several parameters is
+done by separating the types with ``<CODE>and</CODE>''. In expressions and
+patterns, this constructor parameters must be curryfied:
+
+<center><table border=0 width="75%"><tr><th align=left width="50%">OCaml</th><th align=left width="50%">Revised</th></tr>
+<tr><td><tt>type t = C of t1 * t2;;</tt></td><td><tt>type t = [ C of t1 and t2 ];</tt></td></tr>
+<tr><td><tt>C (x, y);;</tt></td><td><tt>C x y;</tt></td></tr>
+</table></center>
+<BR>
+<BR>
+The declaration of a data constructor with one parameter of type
+tuple is done by using a tuple type. In expressions and patterns,
+the parameter has not to be curryfied, since it is alone:
+
+<center><table border=0 width="75%"><tr><th align=left width="50%">OCaml</th><th align=left width="50%">Revised</th></tr>
+<tr><td><tt>type t = D of (t1 * t2);;</tt></td><td><tt>type t = [ D of (t1 * t2) ];</tt></td></tr>
+<tr><td><tt>D (x, y);;</tt></td><td><tt>D (x, y);</tt></td></tr>
+</table></center>
+<BR>
+<BR>
+<LI>The predefined constructors ``<CODE>True</CODE>'' and ``<CODE>False</CODE>''
+start with an uppercase letter.<BR>
+<BR>
+<LI>In record types, the keyword ``<CODE>mutable</CODE>'' must appear
+after the colon:
+
+<center><table border=0 width="75%"><tr><th align=left width="50%">OCaml</th><th align=left width="50%">Revised</th></tr>
+<tr><td><tt>type t = {mutable x : t1};;</tt></td><td><tt>type t = {x : mutable t1};</tt></td></tr>
+</table></center>
+</UL>
+<A NAME="toc25"></A><TABLE CELLPADDING=0 CELLSPACING=0 WIDTH="100%">
+<TR><TD BGCOLOR="#66ff66"><DIV ALIGN=center><TABLE>
+<TR><TD><A NAME="htoc39"><B><FONT SIZE=5>6.8</FONT></B></A></TD>
+<TD WIDTH="100%" ALIGN=center><B><FONT SIZE=5>Modules</FONT></B></TD>
+</TR></TABLE></DIV></TD>
+</TR></TABLE><BR>
+Modules application uses curryfication:
+
+<center><table border=0 width="75%"><tr><th align=left width="50%">OCaml</th><th align=left width="50%">Revised</th></tr>
+<tr><td><tt>type t = Set.Make(M).t;;</tt></td><td><tt>type t = (Set.Make M).t;</tt></td></tr>
+</table></center>
+<BR>
+<BR>
+<A NAME="toc26"></A><TABLE CELLPADDING=0 CELLSPACING=0 WIDTH="100%">
+<TR><TD BGCOLOR="#66ff66"><DIV ALIGN=center><TABLE>
+<TR><TD><A NAME="htoc40"><B><FONT SIZE=5>6.9</FONT></B></A></TD>
+<TD WIDTH="100%" ALIGN=center><B><FONT SIZE=5>Objects</FONT></B></TD>
+</TR></TABLE></DIV></TD>
+</TR></TABLE><BR>
+The objects also have a revised syntax. To see it, the simplest way is
+to write examples in normal syntax and to convert them into revised
+syntax using the command:
+<PRE>
+     camlp4o pr_r.cmo file.ml
+</PRE>
+<A NAME="toc27"></A><TABLE CELLPADDING=0 CELLSPACING=0 WIDTH="100%">
+<TR><TD BGCOLOR="#66ff66"><DIV ALIGN=center><TABLE>
+<TR><TD><A NAME="htoc41"><B><FONT SIZE=5>6.10</FONT></B></A></TD>
+<TD WIDTH="100%" ALIGN=center><B><FONT SIZE=5>Miscellaneous</FONT></B></TD>
+</TR></TABLE></DIV></TD>
+</TR></TABLE>
+<UL><LI>
+The ``<CODE>else</CODE>'' is mandatory in the ``<CODE>if</CODE>'' instruction:
+
+<center><table border=0 width="75%"><tr><th align=left width="50%">OCaml</th><th align=left width="50%">Revised</th></tr>
+<tr><td><tt>if a then b</tt></td><td><tt>if a then b else ()</tt></td></tr>
+</table></center>
+<BR>
+<BR>
+<LI>The boolean operations ``or'' and ``and'' must be only written
+with ``<CODE>||</CODE>'' and ``<CODE>&amp;&amp;</CODE>'':
+
+<center><table border=0 width="75%"><tr><th align=left width="50%">OCaml</th><th align=left width="50%">Revised</th></tr>
+<tr><td><tt>a or b & c</tt></td><td><tt>a || b && c</tt></td></tr>
+<tr><td><tt>a || b && c</tt></td><td><tt>a || b && c</tt></td></tr>
+</table></center>
+<BR>
+<BR>
+<LI>No more ``<CODE>begin end</CODE>'' construction. One must use
+parentheses.<BR>
+<BR>
+<LI>The operators as functions are written with an backslash:
+
+<center><table border=0 width="75%"><tr><th align=left width="50%">OCaml</th><th align=left width="50%">Revised</th></tr>
+<tr><td><tt>(+)</tt></td><td><tt>\+</tt></td></tr>
+<tr><td><tt>(mod)</tt></td><td><tt>\mod</tt></td></tr>
+</table></center>
+<LI>The operators with special characters are not automatically
+infix. To define infixes, use the syntax extensions (chapter&nbsp;<A HREF="manual006.html#c:extend">5</A>).<BR>
+<BR>
+<LI>It is possible to group together several declarations either in
+an interface or in an implementation by enclosing them between
+``<CODE>declare</CODE>'' and ``<CODE>end</CODE>''. Example in an interface:
+<PRE>
+   declare
+     type foo = [ Foo of int | Bar ];
+     value f : foo -&gt; int;
+   end;
+</PRE>This can be useful when extending the language structure or signature
+items with a construction generating several items.</UL>
+<A NAME="toc28"></A><TABLE CELLPADDING=0 CELLSPACING=0 WIDTH="100%">
+<TR><TD BGCOLOR="#66ff66"><DIV ALIGN=center><TABLE>
+<TR><TD><A NAME="htoc42"><B><FONT SIZE=5>6.11</FONT></B></A></TD>
+<TD WIDTH="100%" ALIGN=center><B><FONT SIZE=5>Streams and parsers</FONT></B></TD>
+</TR></TABLE></DIV></TD>
+</TR></TABLE>
+<UL><LI>
+The streams and the stream patterns are bracketed with
+``<CODE>[:</CODE>'' and ``<CODE>:]</CODE>'' instead of ``<CODE>[&lt;</CODE>'' and
+``<CODE>&gt;]</CODE>''.<BR>
+<BR>
+<LI>The stream component ``terminal'' is written with a backquote
+instead of a quote:
+
+<center><table border=0 width="75%"><tr><th align=left width="50%">OCaml</th><th align=left width="50%">Revised</th></tr>
+<tr><td><tt>[< '1; '2; s; '3 >]</tt></td><td><tt>[: `1; `2; s; `3 :]</tt></td></tr>
+</table></center>
+<BR>
+<BR>
+<LI>The cases of parsers are bracketed with ``<CODE>[</CODE>'' and
+``<CODE>]</CODE>'', like for ``<CODE>fun</CODE>'', ``<CODE>match</CODE>'' and
+``<CODE>try</CODE>''. If there is one case, the brackets are not mandatory:
+
+<center><table border=0 width="75%"><tr><th align=left width="50%">OCaml</th><th align=left width="50%">Revised</th></tr>
+<tr><td><tt>parser</tt></td><td><tt>parser</tt></td></tr>
+<tr><td><tt>&nbsp;&nbsp;[< 'Foo >] -> e</tt></td><td><tt>[ [: `Foo :] -> e</tt></td></tr>
+<tr><td><tt>| [< p = f >] -> f</tt></td><td><tt>| [: p = f :] -> f ]</tt></td></tr>
+
+<tr><td><tt>parser [< 'x >] -> x</tt></td><td><tt>parser [ [: `x :] -> x ]</tt></td></tr>
+
+<tr><td><tt>parser [< 'x >] -> x</tt></td><td><tt>parser [: `x :] -> x</tt></td></tr>
+</table></center>
+<BR>
+<BR>
+<LI>It is possible to write the empty parser
+raising the exception ``<CODE>Stream.</CODE><CODE>Failure</CODE>''
+whichever parameter is applied, and the empty stream matching always
+raising ``<CODE>Stream.</CODE><CODE>Failure</CODE>'':
+<PRE>
+    parser []
+    match e with parser []
+</PRE></UL>
+
+<I><FONT COLOR=maroon>
+<br>
+
+
+</FONT></I><HR>
+<A HREF="manual006.html"><IMG SRC ="previous_motif.gif" ALT="Previous"></A>
+<A HREF="index.html"><IMG SRC ="contents_motif.gif" ALT="Up"></A>
+<A HREF="manual008.html"><IMG SRC ="next_motif.gif" ALT="Next"></A>
+</BODY>
+</HTML>
