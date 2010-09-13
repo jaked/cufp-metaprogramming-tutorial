@@ -27,9 +27,10 @@ struct
             else
               let rec loop2 j = function
                 | [] -> []
-                | <:ctyp@_loc< $lid:tid'$ >> :: t when tid' = tid && j = i ->
-                    <:ctyp< $lid:tid^"'"$ >> :: loop2 (j+1) t
-                | h::t -> h :: loop2 (j+1) t in
+                | <:ctyp@_loc< $lid:tid'$ >> as h :: t when tid' = tid ->
+                    let h = if j = i then <:ctyp< $lid:tid^"'"$ >> else h in
+                    h :: loop2 (j+1) t
+                | h::t -> h :: loop2 j t in
               <:ctyp< $uid:cid^string_of_int i$ of $list:loop2 0 parts$ >> :: loop (i+1) in
           loop 0
       | _ -> assert false
