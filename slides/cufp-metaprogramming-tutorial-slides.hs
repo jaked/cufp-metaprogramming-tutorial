@@ -26,6 +26,22 @@ import qualified Language.LaTeX.Length as L
 import Language.LaTeX.Slicer (slice)
 import Language.LaTeX.Builder.QQ
 
+doc = B.document dc preamb body where
+  dc = BM.documentclass [BM.t,BM.red,BM.compress]
+
+preamb = ø
+       ⊕ B.title «Metaprogramming Tutorial:{B.newline}
+                  OCaml and Template Haskell»
+       ⊕ B.author «Jake Donham and Nicolas Pouillard»
+       ⊕ B.institute (B.texttt "jake@donham.org nicolas.pouillard@gmail.com")
+       ⊕ BI.rawPreamble "\\date{CUFP 2010, Baltimore}"
+       ⊕ BM.beamertemplatenavigationsymbolsempty
+       ⊕ BM.useoutertheme [] "default"
+       ⊕ BM.useinnertheme [("shadow","true")] "rounded"
+       ⊕ BM.usecolortheme [] "orchid"
+       ⊕ footline
+       ⊕ margins
+
 body = slice . execWriter $ do
   put B.maketitle
 
@@ -66,29 +82,27 @@ body = slice . execWriter $ do
   slide «A small example: map over a tuple» $ do
     itemize $ do
       item «Avoid boilerplate of mapping over elements of a tuple»
-      -- the double {{ }} is to escape them, because
-      -- {...} are antiquotations for «...»
-      item «so `Tuple.map{{N}} f (a, b, c, ...)` is transformed to
-            `(f a, f b, f c, ...)`»
+      let tup_map_N = ml"Tuple.map{N} f (a, b, c, ...)" -- lifted to avoid nested braces
+      item «so {tup_map_N} is transformed to {ml"(f a, f b, f c, ...)"}»
 
   slide «tuple map in OCaml» $ do
     p «...»
 
   slide «tuple map in Haskell» $ do
-    p «import qualified Data.Tuple.TH as T»
-    p «`$(T.map 4) f (a,b,c,d)` is transformed to
-      `(f a, f b, f c, f d)»
+    p $ hs"import qualified Data.Tuple.TH as T"
+    p «{hs"$(T.map 4) f (a,b,c,d)"} is transformed to
+       {hs"(f a, f b, f c, f d)"}»
 
   slideC «Camlp4: mechanics»
 
   slide «How to run Camlp4:» $ do
     itemize $ do
-      item «`camlp4of [module.cmo] [file.ml]`»
-      item «show loaded modules: `-loaded-modules`»
-      item «print original syntax: `-printer o`»
-      item «show AST for debugging: `-filter Camlp4AstLifter`»
-      item «take input from command line: `-str [input]`»
-      item «Ex. `camlp4of -printer o -filter Camlp4AstLifter -str "type t = Foo"`»
+      item . sh $ "camlp4of [module.cmo]* [file.ml]"
+      item «show loaded modules: {sh"-loaded-modules"}»
+      item «print original syntax: {sh"-printer o"}»
+      item «show AST for debugging: {sh"-filter Camlp4AstLifter"}»
+      item «take input from command line: {sh"-str [input]"}»
+      item «Ex. {sh"camlp4of -printer o -filter Camlp4AstLifter \\\n    -str 'type t = Foo'"}»
 
 {-
 # ASTs in Camlp4
@@ -129,29 +143,35 @@ Alternative syntax for OCaml:
 # Examples
 
  * ...
+-}
 
-# ASTs in Template Haskell
+  slide «ASTs in Template Haskell» $ do
+    p «...»
 
-# Haskell quotations in Template Haskell
+  slide «Haskell quotations in Template Haskell» $ do
+    p «...»
 
-# Practice: [something small]
+  slide «Practice: Generic functions on Tuples» $ do
+    p «...»
 
-# A bigger example: [??]
+  slide «A bigger example: [??]» $ do
+    p «...»
 
-# Practice: [something bigger]
+  slide «Practice: [something bigger]» $ do
+    p «...»
 
-# Camlp4-specific features, example
+  slide «Camlp4-specific features, example» $ do
+    itemize $ do
+      item «extending OCaml syntax»
 
- * extending OCaml syntax
+  slide «Template Haskell specific features, example» $ do
+    itemize $ do
+      item «reification»
+      item «safer name handling with Q monad»
+      item «type-checked quotations»
 
-# Template Haskell specific features, example
-
- * reification
- * safer name handling with Q module
- * type-checked quotations
-
-# Practice: [something using the specific features]
- -}
+  slide «Practice: [something using the specific features]» $ do
+    p «...»
 
 todo :: a -> a
 todo = id
@@ -164,22 +184,7 @@ docName = "cufp-metaprogramming-tutorial-slides"
 
 main = quickView myViewOpts{basedir="out",showoutput=False,pdfviewer="echo"} docName doc
 
-doc = B.document dc preamb body where
-  dc = BM.documentclass [BM.t,BM.red,BM.compress]
-
 usepackages = mconcat . map (BI.usepackage [] . BI.pkgName)
-
-preamb = ø
-       ⊕ B.title «Metaprogramming Tutorial: OCaml and Template Haskell»
-       ⊕ B.author «Jake Donham and Nicolas Pouillard»
-       ⊕ B.institute (B.texttt "jake@donham.org nicolas.pouillard@gmail.com")
-       ⊕ BI.rawPreamble "\\date{CUFP 2010, Baltimore}"
-       ⊕ BM.beamertemplatenavigationsymbolsempty
-       ⊕ BM.useoutertheme [] "default"
-       ⊕ BM.useinnertheme [("shadow","true")] "rounded"
-       ⊕ BM.usecolortheme [] "orchid"
-       ⊕ footline
-       ⊕ margins
 
 footline :: PreambleItem
 footline =
@@ -227,6 +232,7 @@ code = verb . dropWhile (=='\n')
 
 hs = code
 ml = code
+sh = code
 
 paraC = put . B.center . B.para
 
@@ -242,7 +248,7 @@ exampleHS :: String -> ParItemW
 exampleHS = example . hs
 
 itemize block = B.itemize !$? block
-description block = B.itemize !$? block
+description block = B.description !$? block
 item = tell . return . B.item . B.para
 itemD x = tell . return . B.item' x . B.para
 
