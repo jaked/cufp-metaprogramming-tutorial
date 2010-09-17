@@ -1,3 +1,8 @@
++----------------------------------------------+
+|Deprecated, the slides now take place in      |
+|slides/cufp-metaprogramming-tutorial-slides.hs|
++----------------------------------------------+
+
 # What is static metaprogramming?
 
  * compile-time code generation
