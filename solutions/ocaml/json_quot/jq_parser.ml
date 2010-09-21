@@ -3,11 +3,15 @@ open Jq_ast
 
 module Gram = MakeGram(Lexer)
 
-let json = Gram.Entry.mk "json"
+let json_eoi = Gram.Entry.mk "json_eoi"
+
+let parse_json_eoi loc s = Gram.parse_string json_eoi loc s
 
 ;;
 
 EXTEND Gram
+  GLOBAL: json_eoi;
+
   json: [[
       "null" -> Jq_null
     | "true" -> Jq_bool true
@@ -27,4 +31,6 @@ EXTEND Gram
 
     | e1 = SELF; ":"; e2 = SELF -> Jq_colon (e1, e2)
   ]];
+
+  json_eoi: [[ x = json; EOI -> x ]];
 END
