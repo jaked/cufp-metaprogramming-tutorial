@@ -1,7 +1,7 @@
+open Camlp4.PreCast
 open Jq_ast
-open Jq_lexer
 
-module Gram = Camlp4.PreCast.MakeGram(Jq_lexer)
+module Gram = MakeGram(Lexer)
 
 let json = Gram.Entry.mk "json"
 
@@ -12,7 +12,8 @@ EXTEND Gram
       "null" -> Jq_null
     | "true" -> Jq_bool true
     | "false" -> Jq_bool false
-    | n = NUMBER -> Jq_number (float_of_string n)
+    | i = INT -> Jq_number (float_of_string i)
+    | f = FLOAT -> Jq_number (float_of_string f)
     | s = STRING -> Jq_string s
 
     | `ANTIQUOT (""|"bool"|"int"|"flo"|"str"|"list"|"alist" as n, s) ->
