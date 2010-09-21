@@ -1,1 +1,1 @@
-type t = Foo of bool | Bar of int * t * t | Baz of t * string
+type ('a, 'b) t = Foo of bool | Bar of int * ('a, 'b) t * ('a, 'b) t | Baz of ('a, 'b) t * string

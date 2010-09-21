@@ -12,23 +12,33 @@ module Make (AstFilters : Sig.AstFilters) =
 struct
   open AstFilters
 
-  let arm tid a l =
+  let _loc = Ast.Loc.ghost
+
+  let tapps t ts =
+    List.fold_left
+      (fun t t' -> <:ctyp< $t$ $t'$ >>)
+      t
+      ts
+
+  let ctyp_eq t1 t2 =
+    let strip_locs t = (Ast.map_loc (fun _ -> Ast.Loc.ghost))#ctyp t in
+    strip_locs t1 = strip_locs t2
+
+  let arm tid tvars a l =
     match a with
       | <:ctyp< $uid:_$ >> -> l
-      | <:ctyp@_loc< $uid:cid$ of $parts$ >> ->
+      | <:ctyp< $uid:cid$ of $parts$ >> ->
+          let tdef = tapps <:ctyp< $lid:tid$ >> tvars in
+          let tdef' = tapps <:ctyp< $lid:tid^"'"$ >> tvars in
           let parts = Ast.list_of_ctyp parts [] in
-          let tids =
-            List.length
-              (List.filter
-                 (function <:ctyp< $lid:tid'$ >> when tid' = tid -> true | _ -> false)
-                 parts) in
+          let tdefs = List.length (List.filter (fun t -> ctyp_eq t tdef) parts) in
           let rec loop i =
-            if i >= tids then l
+            if i >= tdefs then l
             else
               let rec loop2 j = function
                 | [] -> []
-                | <:ctyp@_loc< $lid:tid'$ >> as h :: t when tid' = tid ->
-                    let h = if j = i then <:ctyp< $lid:tid^"'"$ >> else h in
+                | h::t when ctyp_eq h tdef ->
+                    let h = if j = i then tdef' else h in
                     h :: loop2 (j+1) t
                 | h::t -> h :: loop2 j t in
               <:ctyp< $uid:cid^string_of_int i$ of $list:loop2 0 parts$ >> :: loop (i+1) in
@@ -40,11 +50,11 @@ struct
     inherit Ast.map as super
 
     method str_item = function
-      | <:str_item@_loc< type $lid:tid$ = [ $arms$ ] >> as si ->
-          let arms = List.fold_right (arm tid) (Ast.list_of_ctyp arms []) [] in
+      | <:str_item< type $Ast.TyDcl (_, tid, tvars, <:ctyp< [ $arms$ ] >>, [])$ >> as si ->
+          let arms = List.fold_right (arm tid tvars) (Ast.list_of_ctyp arms []) [] in
           <:str_item<
             $si$;
-            type $lid:tid^"'"$ = [ Top | $list:arms$ ]
+            type $Ast.TyDcl (_loc, tid^"'", tvars, <:ctyp< [ Top | $list:arms$ ] >>, [])$
           >>
       | si -> super#str_item si
   end
