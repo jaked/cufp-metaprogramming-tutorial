@@ -16,7 +16,7 @@ filter we just provide a function of type `Ast.str_item ->
 Ast.str_item`; we match the AST fragment for the syntax above and
 replace it with the rewritten code.
 
-To walk the tree we extend the `Ast.map` object, which 
+To walk the tree we extend the `Ast.map` object.
 
 ## Other stuff
 
