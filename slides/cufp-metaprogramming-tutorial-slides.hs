@@ -176,6 +176,76 @@ body = slice . execWriter $ do
 
   slideC «Template Haskell»
 
+
+
+  slideC «Exercises»
+
+
+
+  slide «Tuple map» $ do
+    p «Implement the tuple map syntax from the example.»
+
+
+
+  slide «Zipper types» $ do
+
+    p «The "zipper" representation of a value of type {ml"t"} is a
+       subtree of type {ml"t"}, and a context of type {ml"t'"}, where
+       {ml"t'"} is derived systematically from {ml"t"}. (see Huet)»
+
+    put B.bigskip
+
+    p «A zipper type has:»
+    itemize $ do
+      item «a {ml"Top"} arm»
+      item «for each arm containing {ml"t"}, an arm for each occurrence of {ml"t"}
+            with that occurrence replaced with {ml"t'"}»
+
+    put B.bigskip
+
+    p «For example: {B.newline}
+      {ml"  type t = Leaf | Tree of t * t"} {B.newline}
+      has zipper type {B.newline}
+      {ml"  type t' = Top | Tree0 of t' * t | Tree1 of t * t'"}»
+
+    put B.bigskip
+
+    p «Implement a generator for zipper types.»
+
+
+
+  slide «Implementing quotations/antiquotations in Camlp4» $ do
+    p «Quotations are implemented in several phases:»
+    itemize $ do
+      item «quotation is lexed to a {ml"QUOTATION"} token containing tag and body as strings»
+      item «expander for tag is looked up according to parse context (e.g. {ml"expr"} vs. {ml"patt"})»
+      item «expander parses string to quotation AST with {ml"FooAnt"} nodes for antiquotations, containing tag and body»
+      item «expander lifts quotation AST to Camlp4 AST according to parse context»
+      item «expander parses antiquotation nodes as OCaml and applies conversions according to tag»
+
+
+
+  slide «Implementing quotations/antiquotations in Template Haskell» $ do
+    p «»
+
+
+
+  slide «JSON quotations» $ do
+    p «We can define quotations for JSON: {B.newline}
+       {ml"  <:json< [ 1, 2, 3 ] >>"} {B.newline}
+       {ml"  <:json< { 'foo' : true, 'bar' : 17 } >>"}»
+
+    put B.bigskip
+
+    p «And antiquotations: {B.newline}
+       {ml"  <:json< [ 1, $int:x$, 3 ] >>"} {B.newline}
+       {ml"  <:json< { 'foo' : $bool:b$, 'bar' : 17  } >>"}
+       {ml"  <:json< [ 1, $list:y$, 3 ] >>"} {B.newline}»
+
+    put B.bigskip
+
+    p «Implement JSON quotations and antiquotations.»
+
 {-
   slide «ASTs in Template Haskell» $ do
     p «...»
