@@ -45,17 +45,23 @@ preamb = ø
 body = slice . execWriter $ do
   put B.maketitle
 
-  slide «What is static metaprogramming?» $ do
+
+
+  slide «Static metaprogramming» $ do
+    p «What is it?»
     itemize $ do
       item «compile-time code generation»
       item «transformation of syntax trees»
 
-  slide «What's it good for?» $ do
+    p «What's it good for?»
+
     itemize $ do
-      item «for convenience (e.g. generate boilerplate or type-derived functions)»
-      item «for speed (e.g. generate first-order functions from higher-order templates)»
-      item «for EDSLs (e.g. embedded regexps or SQL)»
+      item «for convenience (generate boilerplate or type-derived functions)»
+      item «for speed (generate first-order functions from higher-order templates)»
+      item «for EDSLs (embedded regexps or SQL)»
       item «for language extensions» -- (e.g. ???)
+
+
 
   slide «Static metaprogramming in OCaml and Haskell» $ do
     description $ do
@@ -65,37 +71,83 @@ body = slice . execWriter $ do
       itemD «Template Haskell:»
         «compiler extensions to GHC,
          AST transformations embedded in Haskell code»
-  {-
-  # A small example: first-order map
-  
-   * Eliminate use of higher-order function argument by generating
-  static expansion
-   * so `List.map f list` is transformed to
-    `let rec map = function [] -> [] | a::l -> let r = f a in r :: map l`
-   * benchmark showing this is faster [hopefully]
-  
-  # first-order map in OCaml
-  
-  # first-order map in Haskell
-  -}
 
-  slide «A small example: map over a tuple» $ do
+
+
+  slide «Small example: map over a tuple» $ do
+
     itemize $ do
       item «Avoid boilerplate of mapping over elements of a tuple»
-      let tup_map_N = ml"Tuple.map{N} f (a, b, c, ...)" -- lifted to avoid nested braces
-      item «so {tup_map_N} is transformed to {ml"(f a, f b, f c, ...)"}»
 
-  slide «tuple map in OCaml» $ do
-    p «...»
+      item «in OCaml, {B.newline}
+            {ml"  Tuple.map f (a, b, c, d)"} {B.newline}
+            is transformed to {B.newline}
+            {ml"  (f a, f b, f c, f d)"}»
 
-  slide «tuple map in Haskell» $ do
-    p $ hs"import qualified Data.Tuple.TH as T"
-    p «{hs"$(T.map 4) f (a,b,c,d)"} is transformed to
-       {hs"(f a, f b, f c, f d)"}»
+      item «in Haskell, {B.newline}
+            {hs"  import qualified Data.Tuple.TH as T"} {B.newline}
+            {hs"  $(T.map 4) f (a,b,c,d)"} {B.newline}
+            is transformed to {B.newline}
+            {hs"  (f a, f b, f c, f d)"}»
 
-  slideC «Camlp4: mechanics»
 
-  slide «How to run Camlp4:» $ do
+
+  slideC «Camlp4»
+
+  slide «ASTs in Camlp4:» $ do
+    itemize $ do
+      item . ml $ "type expr = ... and patt = ... and \n ctyp = ... and str_item = ... and ..."
+      item «e.g. {ml"ExInt"} for an int expr, {ml"TySum"} for a sum type»
+      item «see {sh"Camlp4Ast.partial.ml"} for full def»
+      item «somewhat loose---easy to make invalid AST»
+      item «converted to OCaml AST; see {sh"Camlp4Ast2OCamlAst.ml"} for errors»
+
+
+
+  slide «OCaml quotations:» $ do
+    itemize $ do
+      item «a way to work with the AST using concrete syntax»
+      item «you can always fall back to AST constructors!»
+      item «e.g. {ml"<:expr< 1, 2 >>"} becomes {B.newline}
+           {ml"ExTup (_, (ExCom (_, (ExInt (_, \"1\")), \n                     (ExInt (_, \"2\")))))"}»
+      item «{ml"<:ctyp< int * int >>"} becomes {B.newline}
+           {ml"TyTup (_, (TySta (_, (TyId (_, (IdLid (_, \"int\")))), \n                     (TyId (_, (IdLid (_, \"int\")))))))"}»
+      item «antiquotations: {ml"<:expr< 1, $x$ >>"}, {ml"<:expr< 1, $`int:x$ >>"}»
+      item «see doc page of quotations / antiquotations»
+
+
+
+  slide «Working with the AST:» $ do
+    p . ml $ "Ast.map"
+    itemize $ do
+      item «object that maps over AST»
+      item «method for each syntactic class»
+      item «override to operate on AST»
+    p «locations, {ml"Ast.Loc.t"}»
+    itemize $ do
+      item «stores filename and position»
+      item «must provide one to construct AST nodes»
+      item «quotations use {ml"_loc"} by default»
+      item . ml $ "Loc.ghost"
+      item . ml $ "Ast.loc_of_expr e"
+      item . ml $ "<:expr@_loc< >>"
+      item . ml $ "<:expr@here< >>"
+
+
+
+  slide «Revised syntax:» $ do
+    itemize $ do
+      item «alternative concrete syntax for OCaml»
+      item «fixes some infelicities in OCaml syntax»
+      item «makes antiquotation easier (gives more context, bugs with original syntax)»
+      item «{ml"list t"} instead of {ml"t list"}»
+      item «{ml"match [ patt -> expr | ... ]"} instead of {ml"match patt -> expr | ..."}»
+      item «{ml"True"} instead of {ml"true"}»
+      item «see doc page for full details»
+
+
+
+  slide «Running Camlp4:» $ do
     itemize $ do
       item . sh $ "camlp4of [module.cmo]* [file.ml]"
       item «show loaded modules: {sh"-loaded-modules"}»
@@ -104,47 +156,27 @@ body = slice . execWriter $ do
       item «take input from command line: {sh"-str [input]"}»
       item «Ex. {sh"camlp4of -printer o -filter Camlp4AstLifter \\\n    -str 'type t = Foo'"}»
 
+
+
+  slide «Debugging:» $ do
+    itemize $ do
+      item «don't know what AST to use?»
+      {- itemize $ do -}
+      item «run example through camlp4of to see what AST is parsed»
+      item «quotations / antiquotations don't work?»
+      {- itemize $ do -}
+      item «read parsers {sh":("} to see why ({sh"Camlp4OCamlRevisedParser.ml"}, {sh"Camlp4OCamlParser.ml"})»
+      item «fall back to AST constructors»
+      item «errors converting Camlp4 to OCaml AST?»
+      {- itemize $ do -}
+      item «read converter to see why ({sh"Camlp4Ast2OCamlAst.ml"})»
+      item «use {sh"-filter Camlp4AstLifter"} to see what you're generating»
+
+
+
+  slideC «Template Haskell»
+
 {-
-# ASTs in Camlp4
-
-The Camlp4 AST:
-
- * `type expr = ... and patt = ... and ctyp = ... and str_item = ... and ...`
- * e.g. `ExInt` for an int expr, `TySum` for a sum type
- * see `Camlp4Ast.partial.ml` for full def
- * somewhat loose---easy to make invalid AST
- * converted to OCaml AST; see `Camlp4Ast2OCamlAst.ml` for errors
- * locations added by parser; see `module type Loc` in `Sig.ml` for API
-
-# OCaml quotations
-
-Work with the OCaml AST using OCaml concrete syntax:
-
- * you can always fall back to AST constructors!
- * `<:expr< 1, 2 >>` becomes
-   `ExTup (_, (ExCom (_, (ExInt (_, "1")), (ExInt (_, "2")))))`
- * `<:ctyp< int * int >>` becomes
-   `TyTup (_, (TySta (_, (TyId (_, (IdLid (_, "int")))), (TyId (_, (IdLid (_, "int")))))))`
- * antiquotations: `<:expr< 1, $x$ >>`, `<:expr< 1, $`int:x$ >>`
- * see wiki page of quotations / antiquotations
-
-# Revised syntax
-
-Alternative syntax for OCaml:
-
- * fixes some infelicities in OCaml syntax
- * makes antiquotation easier (gives more context)
- * avoid bugs in orginal syntax antiquotations
- * `list t` instead of `t list`
- * `match [ patt -> expr | ... ]` instead of `match patt -> expr | ...`
- * `True` instead of `true`
- * see doc page for full details
-
-# Examples
-
- * ...
--}
-
   slide «ASTs in Template Haskell» $ do
     p «...»
 
@@ -172,6 +204,7 @@ Alternative syntax for OCaml:
 
   slide «Practice: [something using the specific features]» $ do
     p «...»
+-}
 
 todo :: a -> a
 todo = id
