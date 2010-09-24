@@ -52,9 +52,11 @@ struct
     method str_item = function
       | <:str_item< type $Ast.TyDcl (_, tid, tvars, <:ctyp< [ $arms$ ] >>, [])$ >> as si ->
           let arms = List.fold_right (arm tid tvars) (Ast.list_of_ctyp arms []) [] in
+          let si' =
+            <:str_item< type $Ast.TyDcl (_loc, tid^"'", tvars, <:ctyp< [ Top | $list:arms$ ] >>, [])$ >> in
           <:str_item<
             $si$;
-            type $Ast.TyDcl (_loc, tid^"'", tvars, <:ctyp< [ Top | $list:arms$ ] >>, [])$
+            $si'$
           >>
       | si -> super#str_item si
   end
