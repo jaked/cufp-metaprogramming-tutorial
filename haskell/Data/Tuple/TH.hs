@@ -30,8 +30,7 @@ import Data.Int
 import Data.Maybe
 import qualified Data.List as L
 import Language.Haskell.TH
-import Language.Haskell.TH.Syntax (qNewName)
-import Language.Haskell.TH.Lift
+import Language.Haskell.TH.Syntax (qNewName,lift)
 import Control.Monad (replicateM,return)
 
 tupPV :: [Name] -> PatQ
