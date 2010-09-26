@@ -196,6 +196,7 @@ unTupleI :: Info -> Maybe Int
 unTupleI (VarI _ t _ _)  = unTupleT t
 unTupleI _               = Nothing
 
+-- let p = (x₁, …, xn) in length 'p == n
 length :: Name -> ExpQ
 length n = do info <- reify n
               lift $ fromMaybe err (unTupleI info)
