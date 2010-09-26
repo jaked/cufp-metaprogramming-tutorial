@@ -1,0 +1,217 @@
+open Camlp4.PreCast
+  
+(* for Ast refs in generated code *)
+type t =
+  | Jq_null
+  | Jq_bool of bool
+  | Jq_number of float
+  | Jq_string of string
+  | Jq_array of t
+  | Jq_object of t
+  | Jq_colon of t * t
+  | Jq_comma of t * t
+  | Jq_nil
+  | Jq_Ant of Loc.t * string
+
+module MetaExpr =
+  struct
+    let rec meta_t =
+      function
+      | Jq_null ->
+          Ast.ExId (_loc,
+            (Ast.IdAcc (_loc, (Ast.IdUid (_loc, "Jq_ast")),
+               (Ast.IdUid (_loc, "Jq_null")))))
+      
+    let meta_float' _loc f = Ast.ExFlo (_loc, (string_of_float f))
+      
+    include
+      struct
+        let meta_string _loc s = Ast.ExStr (_loc, s)
+          
+        let meta_int _loc s = Ast.ExInt (_loc, s)
+          
+        let meta_float _loc s = Ast.ExFlo (_loc, s)
+          
+        let meta_char _loc s = Ast.ExChr (_loc, s)
+          
+        let meta_bool _loc =
+          function
+          | false -> Ast.ExId (_loc, (Ast.IdUid (_loc, "False")))
+          | true -> Ast.ExId (_loc, (Ast.IdUid (_loc, "True")))
+          
+        let rec meta_list mf_a _loc =
+          function
+          | [] -> Ast.ExId (_loc, (Ast.IdUid (_loc, "[]")))
+          | x :: xs ->
+              Ast.ExApp (_loc,
+                (Ast.ExApp (_loc,
+                   (Ast.ExId (_loc, (Ast.IdUid (_loc, "::")))),
+                   (mf_a _loc x))),
+                (meta_list mf_a _loc xs))
+          
+        let rec meta_t _loc =
+          function
+          | Jq_ast.Jq_Ant (x0, x1) -> Ast.ExAnt (x0, x1)
+          | Jq_ast.Jq_nil ->
+              Ast.ExId (_loc,
+                (Ast.IdAcc (_loc, (Ast.IdUid (_loc, "Jq_ast")),
+                   (Ast.IdUid (_loc, "Jq_nil")))))
+          | Jq_ast.Jq_comma (x0, x1) ->
+              Ast.ExApp (_loc,
+                (Ast.ExApp (_loc,
+                   (Ast.ExId (_loc,
+                      (Ast.IdAcc (_loc, (Ast.IdUid (_loc, "Jq_ast")),
+                         (Ast.IdUid (_loc, "Jq_comma")))))),
+                   (meta_t _loc x0))),
+                (meta_t _loc x1))
+          | Jq_ast.Jq_colon (x0, x1) ->
+              Ast.ExApp (_loc,
+                (Ast.ExApp (_loc,
+                   (Ast.ExId (_loc,
+                      (Ast.IdAcc (_loc, (Ast.IdUid (_loc, "Jq_ast")),
+                         (Ast.IdUid (_loc, "Jq_colon")))))),
+                   (meta_t _loc x0))),
+                (meta_t _loc x1))
+          | Jq_ast.Jq_object x0 ->
+              Ast.ExApp (_loc,
+                (Ast.ExId (_loc,
+                   (Ast.IdAcc (_loc, (Ast.IdUid (_loc, "Jq_ast")),
+                      (Ast.IdUid (_loc, "Jq_object")))))),
+                (meta_t _loc x0))
+          | Jq_ast.Jq_array x0 ->
+              Ast.ExApp (_loc,
+                (Ast.ExId (_loc,
+                   (Ast.IdAcc (_loc, (Ast.IdUid (_loc, "Jq_ast")),
+                      (Ast.IdUid (_loc, "Jq_array")))))),
+                (meta_t _loc x0))
+          | Jq_ast.Jq_string x0 ->
+              Ast.ExApp (_loc,
+                (Ast.ExId (_loc,
+                   (Ast.IdAcc (_loc, (Ast.IdUid (_loc, "Jq_ast")),
+                      (Ast.IdUid (_loc, "Jq_string")))))),
+                (meta_string _loc x0))
+          | Jq_ast.Jq_number x0 ->
+              Ast.ExApp (_loc,
+                (Ast.ExId (_loc,
+                   (Ast.IdAcc (_loc, (Ast.IdUid (_loc, "Jq_ast")),
+                      (Ast.IdUid (_loc, "Jq_number")))))),
+                (meta_float _loc x0))
+          | Jq_ast.Jq_bool x0 ->
+              Ast.ExApp (_loc,
+                (Ast.ExId (_loc,
+                   (Ast.IdAcc (_loc, (Ast.IdUid (_loc, "Jq_ast")),
+                      (Ast.IdUid (_loc, "Jq_bool")))))),
+                (meta_bool _loc x0))
+          | Jq_ast.Jq_null ->
+              Ast.ExId (_loc,
+                (Ast.IdAcc (_loc, (Ast.IdUid (_loc, "Jq_ast")),
+                   (Ast.IdUid (_loc, "Jq_null")))))
+          
+      end
+      
+  end
+  
+module MetaPatt =
+  struct
+    let meta_float' _loc f = Ast.PaFlo (_loc, (string_of_float f))
+      
+    include
+      struct
+        let meta_string _loc s = Ast.PaStr (_loc, s)
+          
+        let meta_int _loc s = Ast.PaInt (_loc, s)
+          
+        let meta_float _loc s = Ast.PaFlo (_loc, s)
+          
+        let meta_char _loc s = Ast.PaChr (_loc, s)
+          
+        let meta_bool _loc =
+          function
+          | false -> Ast.PaId (_loc, (Ast.IdUid (_loc, "False")))
+          | true -> Ast.PaId (_loc, (Ast.IdUid (_loc, "True")))
+          
+        let rec meta_list mf_a _loc =
+          function
+          | [] -> Ast.PaId (_loc, (Ast.IdUid (_loc, "[]")))
+          | x :: xs ->
+              Ast.PaApp (_loc,
+                (Ast.PaApp (_loc,
+                   (Ast.PaId (_loc, (Ast.IdUid (_loc, "::")))),
+                   (mf_a _loc x))),
+                (meta_list mf_a _loc xs))
+          
+        let rec meta_t _loc =
+          function
+          | Jq_ast.Jq_Ant (x0, x1) -> Ast.PaAnt (x0, x1)
+          | Jq_ast.Jq_nil ->
+              Ast.PaId (_loc,
+                (Ast.IdAcc (_loc, (Ast.IdUid (_loc, "Jq_ast")),
+                   (Ast.IdUid (_loc, "Jq_nil")))))
+          | Jq_ast.Jq_comma (x0, x1) ->
+              Ast.PaApp (_loc,
+                (Ast.PaApp (_loc,
+                   (Ast.PaId (_loc,
+                      (Ast.IdAcc (_loc, (Ast.IdUid (_loc, "Jq_ast")),
+                         (Ast.IdUid (_loc, "Jq_comma")))))),
+                   (meta_t _loc x0))),
+                (meta_t _loc x1))
+          | Jq_ast.Jq_colon (x0, x1) ->
+              Ast.PaApp (_loc,
+                (Ast.PaApp (_loc,
+                   (Ast.PaId (_loc,
+                      (Ast.IdAcc (_loc, (Ast.IdUid (_loc, "Jq_ast")),
+                         (Ast.IdUid (_loc, "Jq_colon")))))),
+                   (meta_t _loc x0))),
+                (meta_t _loc x1))
+          | Jq_ast.Jq_object x0 ->
+              Ast.PaApp (_loc,
+                (Ast.PaId (_loc,
+                   (Ast.IdAcc (_loc, (Ast.IdUid (_loc, "Jq_ast")),
+                      (Ast.IdUid (_loc, "Jq_object")))))),
+                (meta_t _loc x0))
+          | Jq_ast.Jq_array x0 ->
+              Ast.PaApp (_loc,
+                (Ast.PaId (_loc,
+                   (Ast.IdAcc (_loc, (Ast.IdUid (_loc, "Jq_ast")),
+                      (Ast.IdUid (_loc, "Jq_array")))))),
+                (meta_t _loc x0))
+          | Jq_ast.Jq_string x0 ->
+              Ast.PaApp (_loc,
+                (Ast.PaId (_loc,
+                   (Ast.IdAcc (_loc, (Ast.IdUid (_loc, "Jq_ast")),
+                      (Ast.IdUid (_loc, "Jq_string")))))),
+                (meta_string _loc x0))
+          | Jq_ast.Jq_number x0 ->
+              Ast.PaApp (_loc,
+                (Ast.PaId (_loc,
+                   (Ast.IdAcc (_loc, (Ast.IdUid (_loc, "Jq_ast")),
+                      (Ast.IdUid (_loc, "Jq_number")))))),
+                (meta_float _loc x0))
+          | Jq_ast.Jq_bool x0 ->
+              Ast.PaApp (_loc,
+                (Ast.PaId (_loc,
+                   (Ast.IdAcc (_loc, (Ast.IdUid (_loc, "Jq_ast")),
+                      (Ast.IdUid (_loc, "Jq_bool")))))),
+                (meta_bool _loc x0))
+          | Jq_ast.Jq_null ->
+              Ast.PaId (_loc,
+                (Ast.IdAcc (_loc, (Ast.IdUid (_loc, "Jq_ast")),
+                   (Ast.IdUid (_loc, "Jq_null")))))
+          
+      end
+      
+  end
+  
+let rec t_of_list =
+  function
+  | [] -> Jq_nil
+  | [ e ] -> e
+  | e :: es -> Jq_comma (e, (t_of_list es))
+  
+let rec list_of_t x acc =
+  match x with
+  | Jq_nil -> acc
+  | Jq_comma (e1, e2) -> list_of_t e1 (list_of_t e2 acc)
+  | e -> e :: acc
+  
+

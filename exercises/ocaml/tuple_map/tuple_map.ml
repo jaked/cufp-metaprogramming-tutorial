@@ -9,14 +9,12 @@ struct
 
         method expr e =
           match super#expr e with
-            | <:expr@_loc< Tuple.map $f$ $tup:t$ >> ->
-                let t = 
-                  List.map
-                    (fun e ->
-                       let _loc = Ast.loc_of_expr e in
-                       <:expr< $f$ $super#expr e$ >>)
-                    (Ast.list_of_expr t []) in
-                <:expr< $tup:Ast.exCom_of_list t$ >>
+
+              (*
+                TODO
+                match Tuple.map expressions and rewrite them
+              *)
+
             | e -> e
       end in
     map#str_item

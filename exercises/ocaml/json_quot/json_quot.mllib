@@ -1,5 +1,4 @@
 Jq_ast
-Jq_lexer
 Jq_parser
 Jq_printer
 Jq_quotations

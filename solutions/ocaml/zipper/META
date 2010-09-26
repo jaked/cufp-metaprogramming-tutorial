@@ -1,0 +1,6 @@
+name = "zipper"
+version = "0.1"
+description = "Generate the zipper type of a type"
+requires = "camlp4"
+archive(syntax,preprocessor) = "zipper.cmo"
+archive(syntax,toploop) = "zipper.cmo"

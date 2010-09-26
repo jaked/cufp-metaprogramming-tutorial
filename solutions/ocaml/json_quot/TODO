@@ -1,0 +1,7 @@
+* revisit Jq_print
+* get locations right
+* have to do #camlp4o before #require "json_quot" at toplevel, why?
+* return cleaned-up AST without extra constructors
+   maybe Json_type from json-wheel?
+* simplify Jq_print.JSString?
+* func to validate a Jq_ast.t? can blow up Jq_print with invalid

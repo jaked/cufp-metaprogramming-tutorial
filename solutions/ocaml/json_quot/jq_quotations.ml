@@ -36,16 +36,10 @@ object
       | p -> super#patt p
 end
 
-let json_eoi = Jq_parser.Gram.Entry.mk "json_eoi"
-
-EXTEND Jq_parser.Gram
-  json_eoi: [[ x = Jq_parser.json; `Jq_lexer.EOI -> x ]];
-END;;
-
 let parse_quot_string loc s =
   let q = !Camlp4_config.antiquotations in
   Camlp4_config.antiquotations := true;
-  let res = Jq_parser.Gram.parse_string json_eoi loc s in
+  let res = Jq_parser.parse_json_eoi loc s in
   Camlp4_config.antiquotations := q;
   res
 

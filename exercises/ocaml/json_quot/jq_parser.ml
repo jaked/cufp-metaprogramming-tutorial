@@ -1,18 +1,23 @@
+open Camlp4.PreCast
 open Jq_ast
-open Jq_lexer
 
-module Gram = Camlp4.PreCast.MakeGram(Jq_lexer)
+module Gram = MakeGram(Lexer)
 
-let json = Gram.Entry.mk "json"
+let json_eoi = Gram.Entry.mk "json_eoi"
+
+let parse_json_eoi loc s = Gram.parse_string json_eoi loc s
 
 ;;
 
 EXTEND Gram
+  GLOBAL: json_eoi;
+
   json: [[
       "null" -> Jq_null
     | "true" -> Jq_bool true
     | "false" -> Jq_bool false
-    | n = NUMBER -> Jq_number (float_of_string n)
+    | i = INT -> Jq_number (float_of_string i)
+    | f = FLOAT -> Jq_number (float_of_string f)
     | s = STRING -> Jq_string s
 
     | `ANTIQUOT (""|"bool"|"int"|"flo"|"str"|"list"|"alist" as n, s) ->
@@ -26,4 +31,6 @@ EXTEND Gram
 
     | e1 = SELF; ":"; e2 = SELF -> Jq_colon (e1, e2)
   ]];
+
+  json_eoi: [[ x = json; EOI -> x ]];
 END
