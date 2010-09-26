@@ -48,6 +48,31 @@ antiquotation = string "$(" >> manyTill (noneOf "()") (char ')')
 orAnt :: Parser a -> Parser (MayAnti a)
 orAnt p = (A <$> antiquotation) <|> (V <$> p)
 
+data Generator p e =
+  Generator { gPat :: p, gList :: e }
+data Comprehension p e =
+  Comprehension { cExp :: e, cGens :: [Generator p e] }
+
+generator :: Parser p -> Parser e -> Parser p e
+generator parsePat parseExp = liftM2 Generator parsePat (string "<-" >> parseExp)
+
+{-
+
+[ { "name": n
+  , "age":  i }
+| n <- ["foo", "bar"]
+, i <- [42, 64]]
+
+-}
+compr :: Parser p -> Parser e -> Parser p e
+compr parsePat parseExp
+  = do char '['
+       e <- jsonQ
+       char '|'
+       qs <- generator parsePat parseExp `sep1By` char ','
+       char ']'
+       return $ Comprehension e qs
+
 type JsonQ = Object (MayAnti ByteString) (MayAnti JsonScalar)
 type Json = Object ByteString JsonScalar
 
