@@ -72,5 +72,5 @@ instance Lift a => Lift (MayAnti a) where
 
 json :: QuasiQuoter
 json = QuasiQuoter jsonE jsonP
-  where jsonP _ = error "patterns not supported by the json quasiquoter"
+  where jsonP _ = error "Patterns are not supported by the json quasiquoter"
         jsonE s = {- TODO -} =<< parseQ jsonQ s
