@@ -67,7 +67,9 @@ or use the `syntax_camlp4o` and `pkg_zipper` tags in your ocamlbuild
     fragments of AST, you'll want to ignore the locations somehow.
 
  3. Generate navigation and modification functions for the zipper,
-    following Huet's paper.
+    following Huet's paper. Generate a substitution function which
+    recovers a tree of type `t` by substituting a tree of type `t`
+    into a context of type `t'`.
 
  4. Handle occurrences which are not directly under a constructor, but
     appear in a tuple as above, to any level of nesting.
