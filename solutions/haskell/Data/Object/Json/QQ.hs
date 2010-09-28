@@ -61,22 +61,6 @@ parseQ p inp = do loc <- TH.location
                   either (fail . show) return $
                     parseWithPos p sn pos inp
 
-antiVarE :: MayAnti a -> Maybe TH.ExpQ
-antiVarE (V _) = Nothing
-antiVarE (A a) = Just . TH.varE . TH.mkName $ a
-
-antiVarP :: MayAnti a -> Maybe TH.PatQ
-antiVarP (V _) = Nothing
-antiVarP (A a) = Just . TH.varP . TH.mkName $ a
-
-antiScalarE :: MayAnti JsonScalar -> Maybe TH.ExpQ
-antiScalarE = antiVarE
-antiScalarP :: MayAnti JsonScalar -> Maybe TH.PatQ
-antiScalarP = antiVarP
-antiKeyE :: MayAnti ByteString -> Maybe TH.ExpQ
-antiKeyE = antiVarE
-antiKeyP :: MayAnti ByteString -> Maybe TH.PatQ
-antiKeyP = antiVarP
 
 class LiftScalar a where
   liftScalar :: a -> TH.ExpQ
@@ -103,15 +87,10 @@ instance Lift a => Lift (MayAnti a) where
   lift (V v) = lift v
   lift (A a) = TH.varE . TH.mkName $ a
 
-removeAntiquots :: JsonQ -> JsonObject
-removeAntiquots = mapKeysValues (fromMayAnti err) (fromMayAnti err)
-  where err = error "removeAntiquots: unexpected antiquotation"
-
 coe :: TH.Name -> TH.ExpQ -> TH.ExpQ
 coe t e = [e|($(e) :: $(TH.conT t))|]
 
 json :: QuasiQuoter
 json = QuasiQuoter jsonE jsonP
-  where jsonP s = parseJsonQ s >>= dataToPatQ (const Nothing `extQ` antiScalarP `extQ` antiKeyP)
-        -- jsonE s = parseJsonQ s >>= dataToExpQ (const Nothing `extQ` antiScalarE `extQ` antiKeyE)
+  where jsonP _ = error "Patterns are not supported by the json quasiquoter"
         jsonE s = coe ''Json . lift =<< parseQ jsonQ s
