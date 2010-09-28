@@ -14,15 +14,7 @@ type t =
 
   | Jq_Ant    of Loc.t * string
 
-module MetaExpr :
-sig
-  val meta_t : Ast.loc -> t -> Ast.expr
-end
-
-module MetaPatt :
-sig
-  val meta_t : Ast.loc -> t -> Ast.patt
-end
+val meta_t : Ast.loc -> t -> Ast.expr
 
 val t_of_list : t list -> t
 val list_of_t : t -> t list -> t list

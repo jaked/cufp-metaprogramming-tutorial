@@ -61,21 +61,20 @@ in `Jq_ast` convert between ordinary lists and `Jq_comma` lists.
 ## Quotations
 
 The quotation implementation is in `Jq_quotations`. All it really does
-is parse quotations to `Jq_ast.t` values, lift them to `Ast.expr` or
-`Ast.patt` values, and expand the antiquotations inside. But there are
-a lot of niggly details.
+is parse quotations to `Jq_ast.t` values, lift them to `Ast.expr`
+values and expand the antiquotations inside. But there are a lot of
+niggly details.
 
 The idea with lifting is that we must ultimately produce an `Ast.expr`
-or `Ast.patt` from a quotation; when we write e.g. `<:json< 1 >>` we
-want that to turn into the OCaml AST representing `Jq_number 1.`,
-which of course is `<:expr< Jq_number 1. >>`. So we have two functions
-in `Jq_ast` (`MetaExpr.meta_t` and `MetaPatt.meta_t`) which lift the
-JSON AST to the equivalent OCaml AST.
+from a quotation; when we write e.g. `<:json< 1 >>` we want that to
+turn into the OCaml AST representing `Jq_number 1.`, which of course
+is `<:expr< Jq_number 1. >>`. So we have a function `meta_t` in
+`Jq_ast` which lift the JSON AST to the equivalent OCaml AST.
 
-When we reach a `Jq_Ant` constructor, we lift it to an `Ast.ExAnt` or
-`Ast.PaAnt`, rather than an `<:expr< Jq_Ant >>`. There is no point in
-actually lifting `Jq_Ant` since we're going to expand it anyway, and
-it's easier to find the antiquotations as specific constructors.
+When we reach a `Jq_Ant` constructor, we lift it to an `Ast.ExAnt`
+rather than an `<:expr< Jq_Ant >>`. There is no point in actually
+lifting `Jq_Ant` since we're going to expand it anyway, and it's
+easier to find the antiquotations as specific constructors.
 
 To expand an antiquotation node we have to take the string it
 contains, parse it as OCaml, then (possibly) do some additional
@@ -110,9 +109,9 @@ a toplevel then running
 
 ## Tasks
 
-  1. In `Jq_ast`, the `meta_t` functions are stubbed out; implement
-     them. For the base types you'll need to convert OCaml base types
-     to lifted versions; see the AST and quotation documentation for
+  1. In `Jq_ast`, the `meta_t` function is stubbed out; implement
+     it. For the base types you'll need to convert OCaml base types to
+     lifted versions; see the AST and quotation documentation for
      convenient antiquotation tags. See the antiquotations section
      above for the treatment of `Jq_Ant`.
 

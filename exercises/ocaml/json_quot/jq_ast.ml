@@ -14,25 +14,12 @@ type t =
 
   | Jq_Ant    of Loc.t * string
 
-module MetaExpr =
-struct
-  let rec meta_t _loc = function
-      (*
-        TODO
-        implement cases lifting t to Ast.expr
-      *)
-    | _ -> <:expr< >>
-end
-
-module MetaPatt =
-struct
-  let rec meta_t _loc = function
-      (*
-        TODO
-        implement cases lifting t to Ast.patt
-      *)
-    | _ -> <:patt< >>
-end
+let rec meta_t _loc = function
+    (*
+      TODO
+      implement cases lifting t to Ast.expr
+    *)
+  | _ -> <:expr< >>
 
 let rec t_of_list = function
   | [] -> Jq_nil

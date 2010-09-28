@@ -32,12 +32,6 @@ object
             | _ -> e
           end
       | e -> super#expr e
-  method patt =
-    function
-      | Ast.PaAnt (_loc, s) ->
-          let _, c = destruct_aq s in
-          AQ.parse_patt _loc c
-      | p -> super#patt p
 end
 
 let parse_quot_string loc s =
@@ -49,21 +43,15 @@ let parse_quot_string loc s =
 
 let expand_expr loc _ s =
   let ast = parse_quot_string loc s in
-  let meta_ast = Jq_ast.MetaExpr.meta_t loc ast in
+  let meta_ast = Jq_ast.meta_t loc ast in
   aq_expander#expr meta_ast
 
 let expand_str_item loc _ s =
   let exp_ast = expand_expr loc None s in
   <:str_item@loc< $exp:exp_ast$ >>
 
-let expand_patt loc _ s =
-  let ast = parse_quot_string loc s in
-  let meta_ast = Jq_ast.MetaPatt.meta_t loc ast in
-  aq_expander#patt meta_ast
-
 ;;
 
 Q.add "json" Q.DynAst.expr_tag expand_expr;
-Q.add "json" Q.DynAst.patt_tag expand_patt;
 Q.add "json" Q.DynAst.str_item_tag expand_str_item;
 Q.default := "json"

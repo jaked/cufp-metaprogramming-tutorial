@@ -50,11 +50,11 @@ let lst = [ &lt;&lt; 1 &gt;&gt;, &lt;&lt; 2 &gt;&gt;, &lt;&lt; 3 &gt;&gt; ] in
 
 <h2 id='quotations'>Quotations</h2>
 
-<p>The quotation implementation is in <code>Jq_quotations</code>. All it really does is parse quotations to <code>Jq_ast.t</code> values, lift them to <code>Ast.expr</code> or <code>Ast.patt</code> values, and expand the antiquotations inside. But there are a lot of niggly details.</p>
+<p>The quotation implementation is in <code>Jq_quotations</code>. All it really does is parse quotations to <code>Jq_ast.t</code> values, lift them to <code>Ast.expr</code> values and expand the antiquotations inside. But there are a lot of niggly details.</p>
 
-<p>The idea with lifting is that we must ultimately produce an <code>Ast.expr</code> or <code>Ast.patt</code> from a quotation; when we write e.g. <code>&lt;:json&lt; 1 &gt;&gt;</code> we want that to turn into the OCaml AST representing <code>Jq_number 1.</code>, which of course is <code>&lt;:expr&lt; Jq_number 1. &gt;&gt;</code>. So we have two functions in <code>Jq_ast</code> (<code>MetaExpr.meta_t</code> and <code>MetaPatt.meta_t</code>) which lift the JSON AST to the equivalent OCaml AST.</p>
+<p>The idea with lifting is that we must ultimately produce an <code>Ast.expr</code> from a quotation; when we write e.g. <code>&lt;:json&lt; 1 &gt;&gt;</code> we want that to turn into the OCaml AST representing <code>Jq_number 1.</code>, which of course is <code>&lt;:expr&lt; Jq_number 1. &gt;&gt;</code>. So we have a function <code>meta_t</code> in <code>Jq_ast</code> which lift the JSON AST to the equivalent OCaml AST.</p>
 
-<p>When we reach a <code>Jq_Ant</code> constructor, we lift it to an <code>Ast.ExAnt</code> or <code>Ast.PaAnt</code>, rather than an <code>&lt;:expr&lt; Jq_Ant &gt;&gt;</code>. There is no point in actually lifting <code>Jq_Ant</code> since we&#8217;re going to expand it anyway, and it&#8217;s easier to find the antiquotations as specific constructors.</p>
+<p>When we reach a <code>Jq_Ant</code> constructor, we lift it to an <code>Ast.ExAnt</code> rather than an <code>&lt;:expr&lt; Jq_Ant &gt;&gt;</code>. There is no point in actually lifting <code>Jq_Ant</code> since we&#8217;re going to expand it anyway, and it&#8217;s easier to find the antiquotations as specific constructors.</p>
 
 <p>To expand an antiquotation node we have to take the string it contains, parse it as OCaml, then (possibly) do some additional conversion of the OCaml AST based on the tag. For instance, for the quotation</p>
 
@@ -79,7 +79,7 @@ let lst = [ &lt;&lt; 1 &gt;&gt;, &lt;&lt; 2 &gt;&gt;, &lt;&lt; 3 &gt;&gt; ] in
 
 <h2 id='tasks'>Tasks</h2>
 
-<p>1. In <code>Jq_ast</code>, the <code>meta_t</code> functions are stubbed out; implement them. For the base types you&#8217;ll need to convert OCaml base types to lifted versions; see the AST and quotation documentation for convenient antiquotation tags. See the antiquotations section above for the treatment of <code>Jq_Ant</code>.</p>
+<p>1. In <code>Jq_ast</code>, the <code>meta_t</code> function is stubbed out; implement it. For the base types you&#8217;ll need to convert OCaml base types to lifted versions; see the AST and quotation documentation for convenient antiquotation tags. See the antiquotations section above for the treatment of <code>Jq_Ant</code>.</p>
 
 <p>2. In <code>Jq_quotations</code>, we define an object extending <code>Ast.map</code> to expand antiquotations. There is already code to parse the antiquotations as OCaml, but the conversions have not been implemented; implement them. For <code>list</code> and <code>alist</code>, see the AST section above for how JSON arrays and objects should be represented.</p>
 
