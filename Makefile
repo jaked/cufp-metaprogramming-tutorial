@@ -1,4 +1,6 @@
-all: index.html outline.html
+HTML=$(addsuffix .html,$(basename $(shell find . -name '*.markdown')))
 
 %.html: %.markdown
 	maruku $< -o $@
+
+html: $(HTML)

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC
+    "-//W3C//DTD XHTML 1.1 plus MathML 2.0 plus SVG 1.1//EN"
+    "http://www.w3.org/2002/04/xhtml-math-svg/xhtml-math-svg.dtd">
+<html xmlns:svg='http://www.w3.org/2000/svg' xml:lang='en' xmlns='http://www.w3.org/1999/xhtml'>
+<head><meta content='application/xhtml+xml;charset=utf-8' http-equiv='Content-type' /><title>Tuple map</title></head>
+<body>
+<h1 id='tuple_map'>Tuple map</h1>
+
+<p>This exercise implements a &#8220;function&#8221; to map over a tuple:</p>
+
+<pre><code>let (a, b, c) = Tuple.map g (d, e, f)</code></pre>
+
+<p>Such a function can&#8217;t be implemented in plain OCaml of course; we use Camlp4 to rewrite this to</p>
+
+<pre><code>let (a, b, c) = (g d, g e, g f)</code></pre>
+
+<p>If the tuple is not a syntactic tuple, we have to specify its arity. (Camlp4 works with syntax trees, so has no idea of the type of an expression.) In that case let&#8217;s use the syntax</p>
+
+<pre><code>let x = Tuple.map 3 g y</code></pre>
+
+<p>to indicate that y is a 3-element tuple.</p>
+
+<h2 id='filters'>Filters</h2>
+
+<p>This expansion is implemented using a Camlp4 filter. To implement a filter we just provide a function of type <code>Ast.str_item -&gt;
+Ast.str_item</code>; we match the AST fragment for the syntax above and replace it with the rewritten code.</p>
+
+<p>To walk the tree we extend the <code>Ast.map</code> object, which has a method for each syntactic class (<code>expr</code>, <code>patt</code>, etc.) that just maps over the subtrees and returns the result unchanged.</p>
+
+<h2 id='other_stuff'>Other stuff</h2>
+
+<p>Unfortunately, Camlp4 filters don&#8217;t work in the toplevel. So once you have built and installed the code, you can try it by running e.g.</p>
+
+<pre><code>camlp4of -I `ocamlfind query tuple_map` tuple_map.cmo \
+  -str &quot;Tuple.map f (1, 2, 3)&quot;</code></pre>
+
+<p>or use the <code>syntax_camlp4o</code> and <code>pkg_tuple_map</code> tags in your ocamlbuild <code>_tags</code> file.</p>
+
+<h2 id='tasks'>Tasks</h2>
+
+<ol>
+<li>
+<p>We have provided the boilerplate for registering a filter and walking the AST, but the actual rewrite is not implemented. You need to match <code>Tuple.map</code> expressions and replace them with the appropriate substitution. Do just the case where the tuple is a syntactic tuple.</p>
+
+<p>See the <code>Ast</code> functions <code>list_of_expr</code> and <code>exCom_of_list</code> (see the library signatures documentation) for converting between <code>Ast.ExCom</code> lists (that is, comma separated expressions) and ordinary lists. Also see the quotations page and the <code>tup</code> antiquotation in particular.</p>
+</li>
+
+<li>
+<p>Do the case where the arity of the tuple is given as an argument. Here the <code>int</code> antiquotation is useful (check the expansion if you&#8217;re confused by a type error).</p>
+</li>
+
+<li>
+<p>Lots of other functions from the <code>List</code> module might be useful over tuples instead. Pick a few and implement them.</p>
+</li>
+
+<li>
+<p>Some but not all of the functions in <code>List</code> still make sense if the elements of the tuple or tuples involved have different types. Implement one of these, if you have not already, and make sure that it actually works on such tuples.</p>
+</li>
+</ol>
+</body></html>

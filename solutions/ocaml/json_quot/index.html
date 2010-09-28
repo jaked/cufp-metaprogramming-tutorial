@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC
+    "-//W3C//DTD XHTML 1.1 plus MathML 2.0 plus SVG 1.1//EN"
+    "http://www.w3.org/2002/04/xhtml-math-svg/xhtml-math-svg.dtd">
+<html xmlns:svg='http://www.w3.org/2000/svg' xml:lang='en' xmlns='http://www.w3.org/1999/xhtml'>
+<head><meta content='application/xhtml+xml;charset=utf-8' http-equiv='Content-type' /><title>JSON quotations</title></head>
+<body>
+<h1 id='json_quotations'>JSON quotations</h1>
+
+<p>This exercise implements Camlp4 quotations for JSON. You can write e.g.</p>
+
+<pre><code>&lt;:json&lt; [ 1, 2, 3 ] &gt;&gt;
+
+&lt;:json&lt; { &quot;foo&quot; : [ true, false ], &quot;bar&quot; : [ false, true ] } &gt;&gt;</code></pre>
+
+<p>Antiquotations are also supported, e.g.:</p>
+
+<pre><code>let x = 2 in
+&lt;&lt; [ 1, $int: x$, 3 ] &gt;&gt;
+
+let lst = [ &lt;&lt; 1 &gt;&gt;, &lt;&lt; 2 &gt;&gt;, &lt;&lt; 3 &gt;&gt; ] in
+&lt;&lt; [ $list: lst$ ] &gt;&gt;</code></pre>
+
+<p>(The default quotation is set to <code>json</code> so you can just use <code>&lt;&lt; &gt;&gt;</code>.)</p>
+
+<h2 id='json_ast'>JSON AST</h2>
+
+<p>The JSON AST is defined in <code>Jq_ast</code>. It is not exactly what you might expect; in addition to the constructors for the JSON base types (null, boolean, number, string) and for arrays and objects, there are constructors <code>Jq_colon</code>, <code>Jq_comma</code>, and <code>Jq_nil</code>. The array and object constructors just take a <code>Jq_ast.t</code> as argument rather than a list. Finally there is a <code>Jq_Ant</code> constructor to represent antiquotations; an antiquotation consists of a string containing a tag and the actual antiquotation, separated by a colon.</p>
+
+<p>The idea here is that lists are represented internally to <code>Jq_ast.t</code>, with <code>Jq_comma</code> roughly playing the role of <code>::</code> and <code>Jq_nil</code> of <code>[]</code>. Any tree built of <code>Jq_comma</code> and <code>Jq_nil</code> nodes corresponds to a list where the elements are the non-<code>Jq_comma</code>, non-<code>Jq_nil</code> nodes taken in-order. (In particular a tree that contains no <code>Jq_comma</code> nodes is a one-element list.) This is to make possible antiquotations like</p>
+
+<pre><code>&lt;:json&lt; [ 1, $list: lst$, 3 ] &gt;&gt;</code></pre>
+
+<p>where a list is interpolated within an array. The quotation parses to</p>
+
+<pre><code>Jq_array
+  (Jq_comma (Jq_number 1.,
+    (Jq_comma (Jq_Ant (_loc, &quot;list:lst&quot;),
+       (Jq_number 3.)))))</code></pre>
+
+<p>and when the antiquotation is expanded, the <code>Jq_Ant</code> node is replaced with a <code>Jq_comma</code> list. For objects, the elements of the list must be <code>Jq_colon</code> nodes, so e.g.</p>
+
+<pre><code>&lt;:json&lt; { &quot;foo&quot; : 5 } &gt;&gt;</code></pre>
+
+<p>parses to</p>
+
+<pre><code>Jq_object (Jq_colon (Jq_string &quot;foo&quot;, Jq_number 5.))</code></pre>
+
+<p>A downside to this setup is that it&#8217;s easy to form values which don&#8217;t correspond to a JSON value. The functions <code>t_of_list</code> and <code>list_of_t</code> in <code>Jq_ast</code> convert between ordinary lists and <code>Jq_comma</code> lists.</p>
+
+<h2 id='quotations'>Quotations</h2>
+
+<p>The quotation implementation is in <code>Jq_quotations</code>. All it really does is parse quotations to <code>Jq_ast.t</code> values, lift them to <code>Ast.expr</code> or <code>Ast.patt</code> values, and expand the antiquotations inside. But there are a lot of niggly details.</p>
+
+<p>The idea with lifting is that we must ultimately produce an <code>Ast.expr</code> or <code>Ast.patt</code> from a quotation; when we write e.g. <code>&lt;:json&lt; 1 &gt;&gt;</code> we want that to turn into the OCaml AST representing <code>Jq_number 1.</code>, which of course is <code>&lt;:expr&lt; Jq_number 1. &gt;&gt;</code>. So we have two functions in <code>Jq_ast</code> (<code>MetaExpr.meta_t</code> and <code>MetaPatt.meta_t</code>) which lift the JSON AST to the equivalent OCaml AST.</p>
+
+<p>When we reach a <code>Jq_Ant</code> constructor, we lift it to an <code>Ast.ExAnt</code> or <code>Ast.PaAnt</code>, rather than an <code>&lt;:expr&lt; Jq_Ant &gt;&gt;</code>. There is no point in actually lifting <code>Jq_Ant</code> since we&#8217;re going to expand it anyway, and it&#8217;s easier to find the antiquotations as specific constructors.</p>
+
+<p>To expand an antiquotation node we have to take the string it contains, parse it as OCaml, then (possibly) do some additional conversion of the OCaml AST based on the tag. For instance, for the quotation</p>
+
+<pre><code>&lt;:json&lt; $int:x$ &gt;&gt;</code></pre>
+
+<p>we parse it to <code>Jq_Ant &quot;int:x&quot;</code>, lift it to <code>Ast.ExAnt &quot;int:x&quot;</code>, parse <code>&quot;x&quot;</code> as OCaml, then wrap it in a conversion to get</p>
+
+<pre><code>&lt;:expr&lt; Jq_number (float_of_int x) &gt;&gt;</code></pre>
+
+<h2 id='other_stuff'>Other stuff</h2>
+
+<p>The parser is defined in <code>Jq_parser</code>. It uses Camlp4&#8217;s parsing machinery, which is convenient (in particular because Camlp4&#8217;s default lexer supports antiquotations) but not necessary; the interface takes a <code>string</code> (along with a Camlp4 location) to a <code>Jq_ast.t</code>, so we could use ocamlyacc or whatever instead.</p>
+
+<p>A pretty-printer is defined in <code>Jq_printer</code>, and hooked up to the toplevel so <code>Jq_ast.t</code> values are pretty-printed as JSON.</p>
+
+<p>Once you have built and installed the code, you can try it by starting a toplevel then running</p>
+
+<pre><code>#use &quot;topfind&quot;
+#camlp4o
+#require &quot;json_quot&quot;
+&lt;:json&lt; [1, 2, 3 ] &gt;&gt;</code></pre>
+
+<h2 id='tasks'>Tasks</h2>
+
+<p>1. In <code>Jq_ast</code>, the <code>meta_t</code> functions are stubbed out; implement them. For the base types you&#8217;ll need to convert OCaml base types to lifted versions; see the AST and quotation documentation for convenient antiquotation tags. See the antiquotations section above for the treatment of <code>Jq_Ant</code>.</p>
+
+<p>2. In <code>Jq_quotations</code>, we define an object extending <code>Ast.map</code> to expand antiquotations. There is already code to parse the antiquotations as OCaml, but the conversions have not been implemented; implement them. For <code>list</code> and <code>alist</code>, see the AST section above for how JSON arrays and objects should be represented.</p>
+
+<p>3. Implement a quotation expander for a small language of your choice. You will need to design an AST that can accomodate antiquotations, parse strings to this AST (using whatever parsing technology you like), lift your AST to the OCaml AST, and expand any special antiquotations you care to define. You should be able to copy the niggly details which we haven&#8217;t explained from the JSON code.</p>
+</body></html>
