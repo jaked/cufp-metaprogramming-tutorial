@@ -27,7 +27,7 @@ import Language.LaTeX.Slicer (slice)
 import Language.LaTeX.Builder.QQ
 
 doc = B.document dc preamb body where
-  dc = BM.documentclass [BM.t,BM.red,BM.compress]
+  dc = BM.beamer Nothing [BM.t,BM.red,BM.compress] []
 
 preamb = ø
        ⊕ B.title «Metaprogramming Tutorial:{B.newline}
