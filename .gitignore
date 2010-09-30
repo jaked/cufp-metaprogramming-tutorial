@@ -1,3 +1,6 @@
 _build
+dist
+*.swp
+slides/out
 *~
 #*
