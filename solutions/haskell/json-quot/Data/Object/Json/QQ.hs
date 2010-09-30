@@ -1,12 +1,10 @@
-{-# LANGUAGE TemplateHaskell, DeriveDataTypeable #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Data.Object.Json.QQ where
 
-import Data.Data
 import Data.Object
 import Data.Object.Json
 import Data.Object.Json.DecodeParsec (dataObject, stringLiteral, jsonScalar)
-import Data.Generics (extQ)
 
 import Language.Haskell.TH (Q,Loc(..))
 import Language.Haskell.TH.Syntax (Lift(..))
@@ -17,8 +15,9 @@ import Language.Haskell.TH.Lift.Extras
 import Text.Parsec hiding ((<|>))
 import Text.Parsec.ByteString
 import Text.Parsec.Pos
-import Control.Applicative
+import Control.Applicative hiding (many)
 import Data.ByteString (ByteString)
+import Data.Char (isAlpha, isAlphaNum)
 import qualified Data.ByteString as S
 import qualified Data.ByteString.UTF8 as UTF8
 
@@ -30,20 +29,18 @@ parseWithPos :: Parser a -> SourceName -> (Line,Column) -> String -> Either Pars
 parseWithPos p sn (l,c) inp = parse p' sn (UTF8.fromString inp)
   where p' = setPosition (newPos sn l c) >> p
 
+newtype Antiquotation = Ant { ant :: [String] }
+  deriving (Eq,Ord,Show,Read)
+
 data MayAnti a = V a
-               | A String
-  deriving (Eq,Ord,Typeable,Data,Show,Read)
+               | A Antiquotation
+  deriving (Eq,Ord,Show,Read)
 
-mayAnti :: (a -> b) -> (String -> b) -> MayAnti a -> b
-mayAnti f _ (V v) = f v
-mayAnti _ f (A a) = f a
-
-fromMayAnti :: a -> MayAnti a -> a
-fromMayAnti = mayAnti id . const
-
--- this antiquotation parser is a bit rough
-antiquotation :: Parser String
-antiquotation = string "$(" >> manyTill (noneOf "()") (char ')')
+-- A rough antiquotation parser
+antiquotation :: Parser Antiquotation
+antiquotation = Ant <$> (string "$(" *> ident `sepBy1` spaces1 <* char ')')
+  where spaces1 = many1 space
+        ident = (:) <$> satisfy isAlpha <*> many (satisfy isAlphaNum)
 
 orAnt :: Parser a -> Parser (MayAnti a)
 orAnt p = (A <$> antiquotation) <|> (V <$> p)
@@ -61,16 +58,19 @@ parseQ p inp = do loc <- TH.location
                   either (fail . show) return $
                     parseWithPos p sn pos inp
 
-
 class LiftScalar a where
   liftScalar :: a -> TH.ExpQ
 
 instance Lift a => LiftScalar (MayAnti a) where
   liftScalar (V v) = [e| Scalar $(lift v) |]
-  liftScalar (A a) = TH.varE . TH.mkName $ a
+  liftScalar (A a) = lift a
 
 instance LiftScalar ByteString where
   liftScalar = lift
+
+instance Lift Antiquotation where
+  -- lift = TH.varE . TH.mkName . ant
+  lift = TH.appsE . map (TH.varE . TH.mkName) . ant
 
 instance (Lift key, LiftScalar scalar) => Lift (Object key scalar) where
   lift (Scalar    x) = liftScalar x
@@ -85,7 +85,7 @@ instance Lift JsonScalar where
 
 instance Lift a => Lift (MayAnti a) where
   lift (V v) = lift v
-  lift (A a) = TH.varE . TH.mkName $ a
+  lift (A a) = lift a
 
 coe :: TH.Name -> TH.ExpQ -> TH.ExpQ
 coe t e = [e|($(e) :: $(TH.conT t))|]

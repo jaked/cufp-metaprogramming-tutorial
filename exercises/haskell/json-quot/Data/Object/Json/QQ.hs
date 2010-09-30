@@ -1,12 +1,10 @@
-{-# LANGUAGE TemplateHaskell, DeriveDataTypeable #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Data.Object.Json.QQ where
 
-import Data.Data
 import Data.Object
 import Data.Object.Json
 import Data.Object.Json.DecodeParsec (dataObject, stringLiteral, jsonScalar)
-import Data.Generics (extQ)
 
 import Language.Haskell.TH (Q,Loc(..))
 import Language.Haskell.TH.Syntax (Lift(..))
@@ -17,7 +15,7 @@ import Language.Haskell.TH.Lift.Extras
 import Text.Parsec hiding ((<|>))
 import Text.Parsec.ByteString
 import Text.Parsec.Pos
-import Control.Applicative
+import Control.Applicative hiding (many)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as S
 import qualified Data.ByteString.UTF8 as UTF8
@@ -30,17 +28,16 @@ parseWithPos :: Parser a -> SourceName -> (Line,Column) -> String -> Either Pars
 parseWithPos p sn (l,c) inp = parse p' sn (UTF8.fromString inp)
   where p' = setPosition (newPos sn l c) >> p
 
-data MayAnti a = V a
-               | A String
-  deriving (Eq,Ord,Typeable,Data,Show,Read)
+newtype Antiquotation = Ant { ant :: String }
+  deriving (Eq,Ord,Show,Read)
 
-mayAnti :: (a -> b) -> (String -> b) -> MayAnti a -> b
-mayAnti f _ (V v) = f v
-mayAnti _ f (A a) = f a
+data MayAnti a = V a
+               | A Antiquotation
+  deriving (Eq,Ord,Show,Read)
 
 -- A rough antiquotation parser
-antiquotation :: Parser String
-antiquotation = string "$(" >> manyTill (noneOf "()") (char ')')
+antiquotation :: Parser Antiquotation
+antiquotation = Ant <$> (string "$(" >> manyTill (noneOf "()") (char ')'))
 
 orAnt :: Parser a -> Parser (MayAnti a)
 orAnt p = (A <$> antiquotation) <|> (V <$> p)
@@ -61,6 +58,9 @@ parseQ p inp = do loc <- TH.location
 class LiftScalar a where
   liftScalar :: a -> TH.ExpQ
 
+instance Lift Antiquotation where
+  lift = TH.varE . TH.mkName . ant
+
 instance (Lift key, LiftScalar scalar) => Lift (Object key scalar) where
   lift _ = -- TODO
 
@@ -73,4 +73,4 @@ instance Lift a => Lift (MayAnti a) where
 json :: QuasiQuoter
 json = QuasiQuoter jsonE jsonP
   where jsonP _ = error "Patterns are not supported by the json quasiquoter"
-        jsonE s = {- TODO -} =<< parseQ jsonQ s
+        jsonE = {- TODO -}
