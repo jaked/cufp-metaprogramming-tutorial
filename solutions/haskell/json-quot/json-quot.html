@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC
+    "-//W3C//DTD XHTML 1.1 plus MathML 2.0 plus SVG 1.1//EN"
+    "http://www.w3.org/2002/04/xhtml-math-svg/xhtml-math-svg.dtd">
+<html xmlns:svg='http://www.w3.org/2000/svg' xml:lang='en' xmlns='http://www.w3.org/1999/xhtml'>
+<head><meta content='application/xhtml+xml;charset=utf-8' http-equiv='Content-type' /><title>JSON quotations</title></head>
+<body>
+<h1 id='json_quotations'>JSON quotations</h1>
+
+<p>This exercise implements TH quotations for JSON. You can write e.g.</p>
+
+<pre><code>[$json| [ 1, 2, 3 ] |]
+
+[$json| { &quot;foo&quot; : [ true, false ], &quot;bar&quot; : [ false, true ] } |]</code></pre>
+
+<p>Antiquotations are also supported, e.g.:</p>
+
+<pre><code>let x = [$json| 2 |] in
+[$json| [ 1, $(x), 3 ] |]</code></pre>
+
+<h2 id='json_ast'>JSON AST</h2>
+
+<p>The JSON AST is defined in <code>Data.Object</code> in the <code>data-object</code> package, and the JSON scalars are in <code>Data.Object.Json</code> in the <code>data-object-json</code>.</p>
+
+<p>To handle the antiquotation one will tweak the type of scalars (and the dictionary key type) in order to leave some room to the antiquotations. Actually it is more modular to wrap the actual JSON scalars with this type:</p>
+
+<pre><code>data MayAnti a = V a
+               | A String</code></pre>
+
+<p>Then the parsers will go to <code>Object (MayAnti JsonScalar)</code>, example:</p>
+
+<pre><code>[:json|{ &quot;foo&quot; : 5 } |]</code></pre>
+
+<p>parses to</p>
+
+<pre><code>Mapping [(V &quot;foo&quot;, Scalar (V (JsonNumber 5)))]</code></pre>
+
+<h2 id='tasks'>Tasks</h2>
+
+<p>1. Combine some parser combinators to build a parser supporting antiquotations.</p>
+
+<p>2. Fill the <code>lift</code> instances for the JSON types.</p>
+
+<p>3. Right the JSON quotation expander for expressions using the parser, the lifting function. By testing you may discover some things to tweak.</p>
+</body></html>

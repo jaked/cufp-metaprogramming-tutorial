@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC
+    "-//W3C//DTD XHTML 1.1 plus MathML 2.0 plus SVG 1.1//EN"
+    "http://www.w3.org/2002/04/xhtml-math-svg/xhtml-math-svg.dtd">
+<html xmlns:svg='http://www.w3.org/2000/svg' xml:lang='en' xmlns='http://www.w3.org/1999/xhtml'>
+<head><meta content='application/xhtml+xml;charset=utf-8' http-equiv='Content-type' /><title>Generating zipper types, or deriving the derivative</title></head>
+<body>
+<h1 id='generating_zipper_types_or_deriving_the_derivative'>Generating zipper types, or &#8220;deriving the derivative&#8221;</h1>
+
+<p>Gerard Huet&#8217;s well-known functional pearl The Zipper shows a way to represent a tree that provides constant-time navigation and modification operations. The idea is to represent a pointer into the tree as a pair of the pointed-to subtree and the context in which it appears (that is, its parent node).</p>
+
+<p>This exercise defines a TH function which generates the associated zipper type (the type of the context) of a type.</p>
+
+<p>The context of a subtree consists of the fields in the parent node&#8217;s constructor (other than the pointed-to subtree) and the parent&#8217;s parent (also represented as a context, until we get to the top of the tree). We also need to know which constructor (of the original type) it is, and, if the original type occurs more than once in the constructor, in which occurrence the subtree appears.</p>
+
+<p>Here is a concrete example:</p>
+
+<pre><code>data T = Leaf | Tree T T
+data Z = Top | Tree0 Z T | Tree1 T Z</code></pre>
+
+<p>The zipper type <code>Z</code> always has a <code>Top</code> constructor, and it has a <code>TreeN</code> for each occurrence of <code>T</code> in <code>Tree</code> (and similarly for other constructors), to indicate the position of the subtree. Constructors with no occurrence of the original type have no arm in the zipper type, since the original type can&#8217;t appear with the constructor as its context.</p>
+
+<p>A pointer consists of a <code>(T,Z)</code>. So if we have a tree</p>
+
+<pre><code>Tree (Tree Leaf Leaf) Leaf</code></pre>
+
+<p>a pointer to the left child of the root is</p>
+
+<pre><code>(Tree Leaf Leaf, Tree0 Top Leaf)</code></pre>
+
+<p>We can then define functions to move the pointer in the tree and make modifications to it. See Huet&#8217;s paper for details.</p>
+
+<h2 id='running_the_code'>Running the code</h2>
+
+<p>You can run your code with the <code>run.sh</code> one liner script.</p>
+
+<h2 id='tasks'>Tasks</h2>
+
+<ol>
+<li>
+<p>We have provided the basic template of code; fill in the code that generates the zipper type of a type. At first don&#8217;t worry about type parameters or occurrences of the type which are not directly under a constructor (e.g. in <code>Foo Bool T</code> the type <code>T</code> occurs directly under a constructor, but in <code>Bar Int (Int, T)</code> it does not). Handle ordinary variants only.</p>
+</li>
+
+<li>
+<p>Handle type parameters. Find out how they are represented in the AST, and when generating the zipper type check for occurrences of the type applied to its parameters. Don&#8217;t worry about non-regular type definitions; assume that the type is always applied to the same parameters with which it was declared. When comparing fragments of AST.</p>
+</li>
+</ol>
+
+<h2 id='bonus_tasks'>Bonus Tasks</h2>
+
+<ol>
+<li>
+<p>Generate navigation and modification functions for the zipper, following Huet&#8217;s paper.</p>
+</li>
+
+<li>
+<p>Handle occurrences which are not directly under a constructor, but appear in a tuple as above, to any level of nesting.</p>
+</li>
+
+<li>
+<p>What other types could we reasonably handle? Mutually recursive types? Polymorphic variants? Records? Functions? Objects? Pick some and handle them.</p>
+</li>
+</ol>
+</body></html>

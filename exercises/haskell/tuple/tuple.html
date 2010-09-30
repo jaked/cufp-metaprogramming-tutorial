@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC
+    "-//W3C//DTD XHTML 1.1 plus MathML 2.0 plus SVG 1.1//EN"
+    "http://www.w3.org/2002/04/xhtml-math-svg/xhtml-math-svg.dtd">
+<html xmlns:svg='http://www.w3.org/2000/svg' xml:lang='en' xmlns='http://www.w3.org/1999/xhtml'>
+<head><meta content='application/xhtml+xml;charset=utf-8' http-equiv='Content-type' /><title>Tuple map</title></head>
+<body>
+<h1 id='tuple_map'>Tuple map</h1>
+
+<p>This exercise implements a &#8220;function&#8221; to map over a tuple:</p>
+
+<pre><code>import qualified Data.Tuple.TH as T
+
+let (a, b, c) = $(T.map 3) g (d, e, f)</code></pre>
+
+<p>Such a function can&#8217;t be implemented in plain Haskell of course; we use TH to rewrite this to:</p>
+
+<pre><code>let (a, b, c) = (\f (x1,x2,x3) -&gt; (f x1, f x2, f x3)) g (d, e, f)</code></pre>
+
+<p>Which gets optimized by GHC into (at least):</p>
+
+<pre><code>let (a, b, c) = (g d, g e, g f)</code></pre>
+
+<h2 id='th_code_generators'>TH code generators</h2>
+
+<p>The <code>T.map</code> function has the following type:</p>
+
+<pre><code>map :: Int -&gt; ExpQ</code></pre>
+
+<p>And given the size of the tuple as an integer and returns the code that does map a tuple of this size.</p>
+
+<h2 id='th_splices'>TH Splices</h2>
+
+<p>Once we have generated code and we want to insert it into the original program, and this what TH splices do. The <code>$(e)</code> constructs insert (splice) the result of <code>e</code> of type <code>ExpQ</code> as if the contents where typed by hand.</p>
+
+<h2 id='tasks'>Tasks</h2>
+
+<ol>
+<li>
+<p>There is plenty of functions that you can write on tuples. We propose a lot of functions inspired from the <code>Data.List</code> module. Start with the functions you find the simpler. The test file will helps you to check your code.</p>
+</li>
+
+<li>
+<p>Make sure to write the <code>map</code> function.</p>
+</li>
+
+<li>
+<p>As you write more functions try to factorize them since many of them can get really short definitions.</p>
+</li>
+</ol>
+</body></html>
