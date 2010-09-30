@@ -20,6 +20,12 @@ Exercises:
 
 ## Haskell
 
+Exercises:
+
+ * [Tuple map](exercises/haskell/tuple/tuple.html)
+ * [Zipper types](exercises/haskell/zipper/zipper.html)
+ * [JSON quotations](exercises/haskell/json-quot/json-quot.html)
+
 ## Other
 
  * [The Zipper (Huet)](doc/huet-zipper.pdf)
