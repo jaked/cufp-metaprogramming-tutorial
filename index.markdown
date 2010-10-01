@@ -20,6 +20,12 @@ Exercises:
 
 ## Haskell
 
+ * [TH Manual](http://www.haskell.org/ghc/docs/latest/html/users_guide/template-haskell.html)
+ * [QQ Manual](http://www.haskell.org/ghc/docs/6.12.2/html/users_guide/template-haskell.html#th-quasiquotation)
+ * [TH API](http://hackage.haskell.org/cgi-bin/hackage-scripts/package/template-haskell)
+ * [TH Wiki](http://www.haskell.org/haskellwiki/Template_Haskell)
+ * [TH Paper](http://research.microsoft.com/en-us/um/people/simonpj/papers/meta-haskell/meta-haskell.pdf)
+
 Exercises:
 
  * [Tuple map](exercises/haskell/tuple/tuple.html)
