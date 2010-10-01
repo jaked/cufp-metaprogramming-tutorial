@@ -32,8 +32,9 @@ Loading TH in GHCi:
 
 Hint to show code:
 
-`printQ :: Ppr a => Q a -> IO ()
-printQ x = putStrLn . pprint =<< runQ x`
+`printQ :: Ppr a => Q a -> IO ()`
+
+`printQ x = putStrLn . pprint =<< runQ x`
 
 And then:
 
