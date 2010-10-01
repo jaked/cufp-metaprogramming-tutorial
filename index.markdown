@@ -26,6 +26,19 @@ Exercises:
  * [TH Wiki](http://www.haskell.org/haskellwiki/Template_Haskell)
  * [TH Paper](http://research.microsoft.com/en-us/um/people/simonpj/papers/meta-haskell/meta-haskell.pdf)
 
+Loading TH in GHCi:
+
+`GHCI> :set -XTemplateHaskell`
+
+Hint to show code:
+
+`printQ :: Ppr a => Q a -> IO ()`
+`printQ x = putStrLn . pprint =<< runQ x`
+
+And then:
+
+`printQ [e| [42,43] |]`
+
 Exercises:
 
  * [Tuple map](exercises/haskell/tuple/tuple.html)
