@@ -23,11 +23,11 @@ import qualified Language.LaTeX.Builder.Internal as BI
 import qualified Language.LaTeX.Builder.Beamer as BM
 import qualified Language.LaTeX.Builder.Math as M
 import qualified Language.LaTeX.Length as L
-import Language.LaTeX.Slicer (slice)
+import Language.LaTeX.Slicer (slice,(^$))
 import Language.LaTeX.Builder.QQ
 
 doc = B.document dc preamb body where
-  dc = BM.documentclass [BM.t,BM.red,BM.compress]
+  dc = BM.beamer Nothing [BM.t,BM.red,BM.compress] []
 
 preamb = ø
        ⊕ B.title «Metaprogramming Tutorial:{B.newline}
@@ -45,23 +45,17 @@ preamb = ø
 body = slice . execWriter $ do
   put B.maketitle
 
-
-
   slide «Static metaprogramming» $ do
     p «What is it?»
     itemize $ do
       item «compile-time code generation»
       item «transformation of syntax trees»
-
     p «What's it good for?»
-
     itemize $ do
       item «for convenience (generate boilerplate or type-derived functions)»
       item «for speed (generate first-order functions from higher-order templates)»
       item «for EDSLs (embedded regexps or SQL)»
       item «for language extensions» -- (e.g. ???)
-
-
 
   slide «Static metaprogramming in OCaml and Haskell» $ do
     description $ do
@@ -72,37 +66,31 @@ body = slice . execWriter $ do
         «compiler extensions to GHC,
          AST transformations embedded in Haskell code»
 
-
-
   slide «Small example: map over a tuple» $ do
-
     itemize $ do
       item «Avoid boilerplate of mapping over elements of a tuple»
-
       item «in OCaml, {B.newline}
             {ml"  Tuple.map f (a, b, c, d)"} {B.newline}
             is transformed to {B.newline}
             {ml"  (f a, f b, f c, f d)"}»
-
       item «in Haskell, {B.newline}
             {hs"  import qualified Data.Tuple.TH as T"} {B.newline}
             {hs"  $(T.map 4) f (a,b,c,d)"} {B.newline}
             is transformed to {B.newline}
             {hs"  (f a, f b, f c, f d)"}»
 
-
-
-  slideC «Camlp4»
+  slideCB «Camlp4»
 
   slide «ASTs in Camlp4:» $ do
     itemize $ do
-      item . ml $ "type expr = ... and patt = ... and \n ctyp = ... and str_item = ... and ..."
+      itemV . exampleML . unlines $
+        ["type expr = ... and patt = ... and"
+        ,"ctyp = ... and str_item = ... and ..."
+        ]
       item «e.g. {ml"ExInt"} for an int expr, {ml"TySum"} for a sum type»
       item «see {sh"Camlp4Ast.partial.ml"} for full def»
       item «somewhat loose---easy to make invalid AST»
       item «converted to OCaml AST; see {sh"Camlp4Ast2OCamlAst.ml"} for errors»
-
-
 
   slide «OCaml quotations:» $ do
     itemize $ do
@@ -114,8 +102,6 @@ body = slice . execWriter $ do
            {ml"TyTup (_, (TySta (_, (TyId (_, (IdLid (_, \"int\")))), \n                     (TyId (_, (IdLid (_, \"int\")))))))"}»
       item «antiquotations: {ml"<:expr< 1, $x$ >>"}, {ml"<:expr< 1, $`int:x$ >>"}»
       item «see doc page of quotations / antiquotations»
-
-
 
   slide «Working with the AST:» $ do
     p . ml $ "Ast.map"
@@ -133,8 +119,6 @@ body = slice . execWriter $ do
       item . ml $ "<:expr@_loc< >>"
       item . ml $ "<:expr@here< >>"
 
-
-
   slide «Revised syntax:» $ do
     itemize $ do
       item «alternative concrete syntax for OCaml»
@@ -145,8 +129,6 @@ body = slice . execWriter $ do
       item «{ml"True"} instead of {ml"true"}»
       item «see doc page for full details»
 
-
-
   slide «Running Camlp4:» $ do
     itemize $ do
       item . sh $ "camlp4of [module.cmo]* [file.ml]"
@@ -155,8 +137,6 @@ body = slice . execWriter $ do
       item «show AST for debugging: {sh"-filter Camlp4AstLifter"}»
       item «take input from command line: {sh"-str [input]"}»
       item «Ex. {sh"camlp4of -printer o -filter Camlp4AstLifter \\\n    -str 'type t = Foo'"}»
-
-
 
   slide «Debugging:» $ do
     itemize $ do
@@ -172,20 +152,49 @@ body = slice . execWriter $ do
       item «read converter to see why ({sh"Camlp4Ast2OCamlAst.ml"})»
       item «use {sh"-filter Camlp4AstLifter"} to see what you're generating»
 
+  slideCB «Template Haskell»
 
+  slide «ASTs in Template Haskell» $ do
+    p «TH exposes data-types for expressions, patterns, declarations,
+       types... (Exp, Pat, Dec, Type).»
+    exampleHS . unlines $
+      ["exE :: Exp"
+      ,"exE = ListE [_42, VarE 'succ `AppE` _42]"
+      ,"  where _42 = LitE (IntegerL 42)"
+      ]
 
-  slideC «Template Haskell»
+  slide «Smart constructors, new names, and the Q monad» $ do
+    p «TH also exposes smart constructors for all constructors, to
+       build programs in the Q monad.»
+    exampleHS . unlines $
+      ["apE :: ExpQ"
+      ,"apE = do x <- qNewName \"x\""
+      ,"         y <- qNewName \"y\""
+      ,"         lamE [varP x, varP y] (varE x `appE` varE y)"
+      ]
 
+  slide «Generic quotations in Template Haskell» $ do
+    p «TH has a general mechanism for quotations.»
+    exampleHS "[$sql| SELECT * FROM `users` |]"
+    exampleHS "[$regex| (a|b)*b*(a|b)* |]"
+    exampleHS "[$xml| <person><name>Foo</name><age>42</age></person> |]"
 
+  slide «Haskell quotations in TH» $ do
+    p «TH has a general mechanism for quotations.»
+    exampleHS "[e| \\f g x -> f (g x) |]"
+    exampleHS "[t| Int -> (Bool, Char) |]"
+    exampleHS "[d| data Foo = A | B | C |]"
 
-  slideC «Exercises»
+  slide «... and antiquotions for those» $ do
+    p «Using {hs"$(...)"} one can splice expressions, types... into one other.»
+    exampleHS "[e| case $(a) of { [] -> $(b) ; x:xs -> $(c) x xs } |]"
+    exampleHS "[t| Int -> ($(t), Char) |]"
+    exampleHS "[d| data Foo = A | B $(t) | C |]"
 
-
+  slideCB «Exercises»
 
   slide «Tuple map» $ do
     p «Implement the tuple map syntax from the example.»
-
-
 
   slide «Zipper types» $ do
 
@@ -223,58 +232,40 @@ body = slice . execWriter $ do
       item «expander lifts quotation AST to Camlp4 AST according to parse context»
       item «expander parses antiquotation nodes as OCaml and applies conversions according to tag»
 
-
-
-  slide «Implementing quotations/antiquotations in Template Haskell» $ do
-    p «»
-
-
-
-  slide «JSON quotations» $ do
-    p «We can define quotations for JSON: {B.newline}
-       {ml"  <:json< [ 1, 2, 3 ] >>"} {B.newline}
-       {ml"  <:json< { 'foo' : true, 'bar' : 17 } >>"}»
+  slide «JSON quotations in OCaml» $ do
+    p «We can define quotations for JSON:»
+    exampleHS . unlines $
+      ["<:json< [ 1, 2, 3 ] >>"
+      ,"<:json< { \"foo\" : true, \"bar\" : 17 } >>"
+      ]
 
     put B.bigskip
 
-    p «And antiquotations: {B.newline}
-       {ml"  <:json< [ 1, $int:x$, 3 ] >>"} {B.newline}
-       {ml"  <:json< { 'foo' : $bool:b$, 'bar' : 17  } >>"}
-       {ml"  <:json< [ 1, $list:y$, 3 ] >>"} {B.newline}»
+    p «And antiquotations:»
+    exampleHS . unlines $
+      ["<:json< [ 1, $int:x$, 3 ] >>"
+      ,"<:json< { \"foo\" : $bool:b$, \"bar\" : 17  } >>"
+      ,"<:json< [ 1, $list:y$, 3 ] >>"
+      ]
+
+  slide «JSON quotations in Haskell» $ do
+    p «We can define quotations for JSON:»
+    exampleHS . unlines $
+      ["[$json| [ 1, 2, 3 ] |]"
+      ,"[$json| { \"foo\" : true, \"bar\" : 17 } |]"]
+
+    put B.bigskip
+
+    p «And antiquotations:»
+    exampleHS . unlines $
+      ["[$json| [ 1, $(js x), 3 ] |]"
+      ,"[$json| { \"foo\" : $(js b), \"bar\" : 17  } |]"
+      ,"[$json| [ 1, $(js y), 3 ] |]"
+      ]
 
     put B.bigskip
 
     p «Implement JSON quotations and antiquotations.»
-
-{-
-  slide «ASTs in Template Haskell» $ do
-    p «...»
-
-  slide «Haskell quotations in Template Haskell» $ do
-    p «...»
-
-  slide «Practice: Generic functions on Tuples» $ do
-    p «...»
-
-  slide «A bigger example: [??]» $ do
-    p «...»
-
-  slide «Practice: [something bigger]» $ do
-    p «...»
-
-  slide «Camlp4-specific features, example» $ do
-    itemize $ do
-      item «extending OCaml syntax»
-
-  slide «Template Haskell specific features, example» $ do
-    itemize $ do
-      item «reification»
-      item «safer name handling with Q monad»
-      item «type-checked quotations»
-
-  slide «Practice: [something using the specific features]» $ do
-    p «...»
--}
 
 todo :: a -> a
 todo = id
@@ -319,7 +310,7 @@ slideCs title subtitle =
     slide ø . put . B.center . (⊕subt) . B.para $ title
   where subt = mapNonEmpty ((B.vfill ⊕) . B.para) subtitle
 
-slideC x = slideCs x ø
+slideCB x = slideCs (B.decl B._Huge x) ø
 
 box = BM.block
 
@@ -339,6 +330,8 @@ sh = code
 
 paraC = put . B.center . B.para
 
+paraCHuge = paraC . B.decl B._Huge
+
 alertC = paraC . BM.alert
 
 example :: LatexItem -> ParItemW
@@ -348,10 +341,11 @@ exampleML :: String -> ParItemW
 exampleML = example . ml
 
 exampleHS :: String -> ParItemW
-exampleHS = example . hs
+exampleHS = example . hs . reverse . dropWhile (=='\n') . reverse
 
 itemize block = B.itemize !$? block
 description block = B.description !$? block
 item = tell . return . B.item . B.para
+itemV bk = tell . return . B.item $? bk
 itemD x = tell . return . B.item' x . B.para
 

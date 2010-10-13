@@ -1,6 +1,7 @@
 {-# LANGUAGE TemplateHaskell, RankNTypes #-}
 module Data.Tuple.TH
-  (map
+  (printQ
+  ,map
   ,map'
   ,sequence
   ,sequence_
@@ -24,7 +25,7 @@ module Data.Tuple.TH
   ,unTupleT
   ,unTupleI) where
 
-import Prelude ((&&),otherwise,Bool(..),error,Ord(..),Eq(..),Num(..))
+import Prelude ((&&),otherwise,Bool(..),error,Ord(..),Eq(..),Num(..),putStrLn,IO,(=<<))
 import Data.Function
 import Data.Int
 import Data.Maybe
@@ -32,6 +33,9 @@ import qualified Data.List as L
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax (qNewName,lift)
 import Control.Monad (replicateM,return)
+
+printQ :: Ppr a => Q a -> IO ()
+printQ x = putStrLn . pprint =<< runQ x
 
 tupPV :: [Name] -> PatQ
 tupPV = tupP . L.map varP
