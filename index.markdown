@@ -49,3 +49,4 @@ Exercises:
 ## Other
 
  * [The Zipper (Huet)](doc/huet-zipper.pdf)
+ * [Tutorial slides](slides/cufp-metaprogramming-tutorial-slides.pdf)

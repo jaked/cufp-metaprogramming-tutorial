@@ -39,6 +39,32 @@
 
 <h2 id='haskell'>Haskell</h2>
 
+<ul>
+<li><a href='http://www.haskell.org/ghc/docs/latest/html/users_guide/template-haskell.html'>TH Manual</a></li>
+
+<li><a href='http://www.haskell.org/ghc/docs/6.12.2/html/users_guide/template-haskell.html#th-quasiquotation'>QQ Manual</a></li>
+
+<li><a href='http://hackage.haskell.org/cgi-bin/hackage-scripts/package/template-haskell'>TH API</a></li>
+
+<li><a href='http://www.haskell.org/haskellwiki/Template_Haskell'>TH Wiki</a></li>
+
+<li><a href='http://research.microsoft.com/en-us/um/people/simonpj/papers/meta-haskell/meta-haskell.pdf'>TH Paper</a></li>
+</ul>
+
+<p>Loading TH in GHCi:</p>
+
+<p><code>GHCI&gt; :set -XTemplateHaskell</code></p>
+
+<p>Hint to show code:</p>
+
+<p><code>printQ :: Ppr a =&gt; Q a -&gt; IO ()</code></p>
+
+<p><code>printQ x = putStrLn . pprint =&lt;&lt; runQ x</code></p>
+
+<p>And then:</p>
+
+<p><code>printQ [e| [42,43] |]</code></p>
+
 <p>Exercises:</p>
 
 <ul>
@@ -53,5 +79,7 @@
 
 <ul>
 <li><a href='doc/huet-zipper.pdf'>The Zipper (Huet)</a></li>
+
+<li><a href='slides/cufp-metaprogramming-tutorial-slides.pdf'>Tutorial slides</a></li>
 </ul>
 </body></html>
