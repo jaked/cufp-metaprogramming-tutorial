@@ -21,9 +21,12 @@ struct
             | <:expr@_loc< Tuple.map $f$ $tup:t$ >> ->
                 let t' = 
                   List.map
-                    (fun e -> <:expr< $f$ $e$ >>)
+                    (fun e -> <:expr< __f $e$ >>)
                     (Ast.list_of_expr t []) in
-                <:expr< $tup:Ast.exCom_of_list t'$ >>
+                <:expr<
+                  let __f = $f$ in
+                  $tup:Ast.exCom_of_list t'$
+                >>
 
             | <:expr@_loc< Tuple.map $int:n$ $f$ $t$ >> ->
                 let n = int_of_string n in
@@ -31,9 +34,10 @@ struct
                 let es = init n (fun i -> <:expr< $lid:"x"^string_of_int i$ >>) in
                 let t' =
                   List.map
-                    (fun e -> <:expr< $f$ $e$ >>)
+                    (fun e -> <:expr< f $e$ >>)
                     es in
                 <:expr<
+                  let f = $f$ in
                   let $tup:Ast.paCom_of_list ps$ = $t$ in
                   $tup:Ast.exCom_of_list t'$
                 >>
